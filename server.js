@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 2. あなたの計算ロジック（ここを自分の計算式に書き換えてください）
-app.post('/calculate', (req, res) => {
+app.post('/api/calculate', (req, res) => {
     const data = req.body;
     // --- ここに秘密の計算式を書く ---
     const result = data.value * 1.1; // 例
