@@ -12,7 +12,6 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
 .container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; max-width: 100vw; box-sizing: border-box; }
 .tables-wrapper { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; width: 100%; transition: all 0.3s ease; }
 
-/* --- プレビュー移動用の設定 --- */
 #floatingContainer { 
   display: flex; 
   flex-direction: column; 
@@ -20,15 +19,14 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
   gap: 10px; 
 }
 
-/* ★修正点：通常時は元の位置に並ぶように設定（以前の状態を維持） */
 #exchangeTableWrapper {
-  background: white; /* 通常時は白背景 */
+  background: white; 
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   overflow: hidden;
 }
 
-/* ★設定画面が開いている時だけ、浮遊・ドラッグ用のスタイルを適用 */
+
 .container.setting-open #floatingContainer {
   position: fixed; 
   bottom: 20px; 
@@ -56,7 +54,6 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
 .container.setting-open #previewToggleBtn { display: block !important; }
 .container.setting-open #mainTableWrapper { display: none; }
 
-/* --- 以下のテーブル等は元のスタイルを維持 --- */
 table { border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; white-space: nowrap; }
 td, th { border: 1px solid #e1e4e8; padding: 10px; text-align: center; min-width: 80px; transition: all 0.2s; }
 th { background: #1e3799; color: white; font-size: 13px; }
@@ -215,7 +212,6 @@ input[type="number"] { width: 65px; }
 </div>
 
 <script>
-// --- 変更不可ロジック ---
 const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: true, pin: "1115",
@@ -388,7 +384,6 @@ document.getElementById("saveBtn").addEventListener("click", () => {
 document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("クリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
 document.getElementById("inputBody").addEventListener("input", calculate);
 
-// --- 滑らかなドラッグ機能 ---
 (function() {
   const el = document.getElementById("floatingContainer");
   let isDragging = false, offsetX, offsetY;
