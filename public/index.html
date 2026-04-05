@@ -418,6 +418,22 @@ document.getElementById("inputBody").addEventListener("input", calculate);
   window.addEventListener("touchend", onEnd);
 })();
 
+// ▼▼▼ Enterキーで次の入力欄へ移動する処理 ▼▼▼
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    e.preventDefault(); 
+    const inputs = Array.from(document.querySelectorAll('#mainTable input'));
+    const index = inputs.indexOf(e.target);
+
+    if (index > -1 && index < inputs.length - 1) {
+      inputs[index + 1].focus(); 
+      inputs[index + 1].select(); 
+    } else if (index === inputs.length - 1) {
+      e.target.blur();
+    }
+  }
+});
+
 init();
 </script>
 </body>
