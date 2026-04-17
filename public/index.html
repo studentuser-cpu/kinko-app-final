@@ -421,20 +421,37 @@ document.getElementById("inputBody").addEventListener("input", calculate);
   window.addEventListener("touchend", onEnd);
 })();
 
+// 切り替え設定//
+
+document.addEventListener('focusin', function(e) {
+  if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+    setTimeout(() => { e.target.select(); }, 10);
+  }
+});
+
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
     e.preventDefault(); 
-    const inputs = Array.from(document.querySelectorAll('#mainTable input'));
-    const index = inputs.indexOf(e.target);
+    
+    const barInputs = Array.from(document.querySelectorAll('.in-bar'));
+    const coinInputs = Array.from(document.querySelectorAll('.in-coin'));
+    
+    const navRoute = barInputs.concat(coinInputs);
+    
+    const currentIndex = navRoute.indexOf(e.target);
 
-    if (index > -1 && index < inputs.length - 1) {
-      inputs[index + 1].focus(); 
-      inputs[index + 1].select(); 
-    } else if (index === inputs.length - 1) {
-      e.target.blur();
+    if (currentIndex > -1) {
+      const nextIndex = (currentIndex + 1) % navRoute.length;
+      navRoute[nextIndex].focus();
     }
   }
 });
+
+const originalInit = init;
+init = function() {
+  originalInit();
+  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode', 'numeric'));
+};
 
 init();
 </script>
