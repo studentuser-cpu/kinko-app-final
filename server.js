@@ -67,6 +67,6 @@ app.get('*', (req, res) => {
 
 // Renderのポート番号に合わせる
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => { // ← ここに '0.0.0.0' を追加！
+    console.log(`Server is running on port ${PORT}`);
 });
