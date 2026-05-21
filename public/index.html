@@ -92,11 +92,16 @@ input[type="number"] { width: 65px; }
 .settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
 
 /* ⬇︎ 両替表の両替使用オン時のエッジを囲むCSS ⬇︎ */
-/* 外周の太い青枠の定義 (border-collapse: collapseに対応) */
-td.avail-top-edge { border-top: 2px solid #0097e6 !important; }
-td.avail-bottom-edge { border-bottom: 2px solid #0097e6 !important; }
-td.avail-left-edge { border-left: 2px solid #0097e6 !important; }
-td.avail-right-edge { border-right: 2px solid #0097e6 !important; }
+/* 両替使用オン時の共通背景色 */
+td[class*="avail-"] {
+  background-color: #e8f4fd !important; /* 薄青背景 */
+}
+
+/* 外周の太い枠の定義 (青から黒に変更) */
+td.avail-top-edge { border-top: 2px solid black !important; }
+td.avail-bottom-edge { border-bottom: 2px solid black !important; }
+td.avail-left-edge { border-left: 2px solid black !important; }
+td.avail-right-edge { border-right: 2px solid black !important; }
 </style>
 </head>
 
