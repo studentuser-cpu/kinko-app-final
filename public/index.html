@@ -15,44 +15,44 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
 .container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; max-width: 100vw; box-sizing: border-box; }
 .tables-wrapper { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; width: 100%; transition: all 0.3s ease; }
 
-#floatingContainer { 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  gap: 10px; 
+#floatingContainer { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 10px; 
 }
 
 #exchangeTableWrapper {
-  background: white; 
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  overflow: hidden;
+  background: white; 
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  overflow: hidden;
 }
 
 
 .container.setting-open #floatingContainer {
-  position: fixed; 
-  bottom: 20px; 
-  right: 20px; 
-  z-index: 1001; 
-  cursor: grab;
-  touch-action: none; 
+  position: fixed; 
+  bottom: 20px; 
+  right: 20px; 
+  z-index: 1001; 
+  cursor: grab;
+  touch-action: none; 
 }
 .container.setting-open #exchangeTableWrapper {
-  background: rgba(255, 255, 255, 0.98);
-  border: 3px solid #1e3799; 
-  padding: 10px; 
-  border-radius: 12px;
-  box-shadow: 0 15px 50px rgba(0,0,0,0.4);
-  zoom: 0.8; max-height: 60vh; overflow-y: auto;
+  background: rgba(255, 255, 255, 0.98);
+  border: 3px solid #1e3799; 
+  padding: 10px; 
+  border-radius: 12px;
+  box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+  zoom: 0.8; max-height: 60vh; overflow-y: auto;
 }
 .container.setting-open #floatingContainer:active { cursor: grabbing; }
 
-#previewToggleBtn { 
-  display: none; 
-  background: #1e3799; color: white; border: 2px solid white; 
-  border-radius: 30px; padding: 12px 24px; cursor: pointer; 
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 14px; font-weight: bold; 
+#previewToggleBtn { 
+  display: none; 
+  background: #1e3799; color: white; border: 2px solid white; 
+  border-radius: 30px; padding: 12px 24px; cursor: pointer; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 14px; font-weight: bold; 
 }
 .container.setting-open #previewToggleBtn { display: block !important; }
 .container.setting-open #mainTableWrapper { display: none; }
@@ -90,367 +90,371 @@ input[type="number"] { width: 65px; }
 .settings-tables-container { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
 .settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
+
+/* ⬇︎ 両替使用にチェックした際に対象の枠を囲むCSS ⬇︎ */
+input[type="checkbox"].set-sync:checked { outline: 2px solid #0097e6; outline-offset: 2px; }
+td:has(input[type="checkbox"].set-sync:checked) { box-shadow: inset 0 0 0 3px #0097e6; }
 </style>
 </head>
 
 <body>
 
 <div class="header-bar">
-  <div><strong>金庫管理</strong></div>
-  <div id="user-info"></div>
+  <div><strong>金庫管理</strong></div>
+  <div id="user-info"></div>
 </div>
 
 <div id="tourOverlay" class="tour-overlay"></div>
 <div id="tourBubble" class="tour-bubble" style="display:none;">
-  <div id="tourMessage"></div>
-  <div class="tour-btn-group">
-    <button class="tour-btn" onclick="prevTour()">前へ</button>
-    <button class="tour-btn" onclick="nextTour()" id="tourNextBtn">次へ</button>
-    <button class="tour-btn" onclick="closeTour()">閉じる</button>
-  </div>
+  <div id="tourMessage"></div>
+  <div class="tour-btn-group">
+    <button class="tour-btn" onclick="prevTour()">前へ</button>
+    <button class="tour-btn" onclick="nextTour()" id="tourNextBtn">次へ</button>
+    <button class="tour-btn" onclick="closeTour()">閉じる</button>
+  </div>
 </div>
 
 <div id="mainContainer" class="container">
-  
-  <div id="settingPanel" class="modal-panel">
-    <div class="panel-header">
-      <h3>管理設定・説明</h3>
-      <span class="close-panel" onclick="closeSetting()" style="cursor:pointer; font-size:24px;">×</span>
-    </div>
+  
+  <div id="settingPanel" class="modal-panel">
+    <div class="panel-header">
+      <h3>管理設定・説明</h3>
+      <span class="close-panel" onclick="closeSetting()" style="cursor:pointer; font-size:24px;">×</span>
+    </div>
 
-    <div class="help-section">
-      <div class="help-col">
-        <h4>1. 表示設定（不足時の扱い）</h4>
-        <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
-        <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
-        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
-        <div><span class="help-tag" style="background:#bbb; color:white;">none</span> 【除外】入力欄を消し、計算からも外す</div>
-      </div>
-      <div class="help-col">
-        <h4>2. 「両替使用」チェック</h4>
-        <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
-        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-          <b>💡 例：1,000円札（目標35枚）</b><br>
-          手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
-        </div>
-      </div>
-    </div>
+    <div class="help-section">
+      <div class="help-col">
+        <h4>1. 表示設定（不足時の扱い）</h4>
+        <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
+        <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
+        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
+        <div><span class="help-tag" style="background:#bbb; color:white;">none</span> 【除外】入力欄を消し、計算からも外す</div>
+      </div>
+      <div class="help-col">
+        <h4>2. 「両替使用」チェック</h4>
+        <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
+        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
+          <b>💡 例：1,000円札（目標35枚）</b><br>
+          手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
+        </div>
+      </div>
+    </div>
 
-    <div class="security-section">
-      <div class="security-row">
-        <label style="font-weight:bold; cursor:pointer;"><input type="checkbox" id="set-use-pin"> 保存時にパスワード保護を有効にする</label>
-        <div><label>新しいパスワード: <input type="password" id="set-pin" style="width:120px;" maxlength="10" placeholder="未入力で1234"></label> (初期パスワード:1234)</div>
-      </div>
-    </div>
+    <div class="security-section">
+      <div class="security-row">
+        <label style="font-weight:bold; cursor:pointer;"><input type="checkbox" id="set-use-pin"> 保存時にパスワード保護を有効にする</label>
+        <div><label>新しいパスワード: <input type="password" id="set-pin" style="width:120px;" maxlength="10" placeholder="未入力で1234"></label> (初期パスワード:1234)</div>
+      </div>
+    </div>
 
-    <div id="guide-step-1" style="margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 8px;">
-      <label style="font-weight: bold;">金庫全体の目標総額: </label>
-      <input type="number" id="set-vault-total" style="font-size:18px; width:140px; font-weight:bold; color:#1e3799;"> 円
-    </div>
+    <div id="guide-step-1" style="margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 8px;">
+      <label style="font-weight: bold;">金庫全体の目標総額: </label>
+      <input type="number" id="set-vault-total" style="font-size:18px; width:140px; font-weight:bold; color:#1e3799;"> 円
+    </div>
 
-    <div class="settings-tables-container">
-      <div class="settings-table-wrapper">
-        <h4>棒金の設定</h4>
-        <table style="width: 100%;">
-          <thead>
-            <tr>
-              <th>金額</th>
-              <th id="guide-step-2">1本の枚数</th>
-              <th id="guide-step-3" style="background:#3867d6;">目標(本)</th>
-              <th id="guide-step-4" style="background:#3867d6;">表示設定</th>
-              <th id="guide-step-5" style="background:#3867d6;">両替使用</th>
-            </tr>
-          </thead>
-          <tbody id="settingBarTbody"></tbody>
-        </table>
-      </div>
-      <div class="settings-table-wrapper" id="guide-step-6">
-        <h4>枚数の設定</h4>
-        <table style="width: 100%;">
-          <thead>
-            <tr>
-              <th>金額</th>
-              <th style="background:#4b7bec;">目標(枚)</th>
-              <th style="background:#4b7bec;">表示設定</th>
-              <th style="background:#4b7bec;">両替使用</th>
-            </tr>
-          </thead>
-          <tbody id="settingCoinTbody"></tbody>
-        </table>
-      </div>
-    </div>
+    <div class="settings-tables-container">
+      <div class="settings-table-wrapper">
+        <h4>棒金の設定</h4>
+        <table style="width: 100%;">
+          <thead>
+            <tr>
+              <th>金額</th>
+              <th id="guide-step-2">1本の枚数</th>
+              <th id="guide-step-3" style="background:#3867d6;">目標(本)</th>
+              <th id="guide-step-4" style="background:#3867d6;">表示設定</th>
+              <th id="guide-step-5" style="background:#3867d6;">両替使用</th>
+            </tr>
+          </thead>
+          <tbody id="settingBarTbody"></tbody>
+        </table>
+      </div>
+      <div class="settings-table-wrapper" id="guide-step-6">
+        <h4>枚数の設定</h4>
+        <table style="width: 100%;">
+          <thead>
+            <tr>
+              <th>金額</th>
+              <th style="background:#4b7bec;">目標(枚)</th>
+              <th style="background:#4b7bec;">表示設定</th>
+              <th style="background:#4b7bec;">両替使用</th>
+            </tr>
+          </thead>
+          <tbody id="settingCoinTbody"></tbody>
+        </table>
+      </div>
+    </div>
 
-    <div style="text-align: right; margin-top: 25px;">
-      <button id="saveBtn" style="padding: 12px 40px; background: #2ed573; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:6px;">設定をブラウザに保存</button>
-    </div>
-  </div>
+    <div style="text-align: right; margin-top: 25px;">
+      <button id="saveBtn" style="padding: 12px 40px; background: #2ed573; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:6px;">設定をブラウザに保存</button>
+    </div>
+  </div>
 
-  <div class="tables-wrapper" id="tablesWrapper">
-    <div id="mainTableWrapper">
-      <table id="mainTable">
-        <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
-        <tbody id="inputBody"></tbody>
-        <tr class="total"><td>合計</td><td colspan="2"></td><td id="total">0</td></tr>
-        <tr><td>差額</td><td colspan="2"></td><td id="diff" class="diff-ok">0</td></tr>
-      </table>
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
-        <button id="settingBtn" style="padding:10px 20px; background:#2f3542; color:white; cursor:pointer; border:none; border-radius:6px;">設定・説明</button>
-        <button id="resetBtn" style="padding:10px 20px; background:#ff7675; color:white; cursor:pointer; border:none; border-radius:6px;">数値をクリア</button>
-      </div>
-    </div>
+  <div class="tables-wrapper" id="tablesWrapper">
+    <div id="mainTableWrapper">
+      <table id="mainTable">
+        <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
+        <tbody id="inputBody"></tbody>
+        <tr class="total"><td>合計</td><td colspan="2"></td><td id="total">0</td></tr>
+        <tr><td>差額</td><td colspan="2"></td><td id="diff" class="diff-ok">0</td></tr>
+      </table>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+        <button id="settingBtn" style="padding:10px 20px; background:#2f3542; color:white; cursor:pointer; border:none; border-radius:6px;">設定・説明</button>
+        <button id="resetBtn" style="padding:10px 20px; background:#ff7675; color:white; cursor:pointer; border:none; border-radius:6px;">数値をクリア</button>
+      </div>
+    </div>
 
-    <div id="floatingContainer">
-      <div id="exchangeTableWrapper">
-        <table>
-          <thead><tr><th>金額</th><th>棒金差</th><th>枚数差</th></tr></thead>
-          <tbody id="exchangeBody"></tbody>
-          <tr class="total"><td colspan="2">使用可能金額（両替用）</td><td id="availableMoney" style="color:#0097e6;">0円</td></tr>
-          <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#eb4d4b;">0円</td></tr>
-        </table>
-      </div>
-      <button id="previewToggleBtn" onclick="togglePreview()">プレビューを非表示にする</button>
-    </div>
+    <div id="floatingContainer">
+      <div id="exchangeTableWrapper">
+        <table>
+          <thead><tr><th>金額</th><th>棒金差</th><th>枚数差</th></tr></thead>
+          <tbody id="exchangeBody"></tbody>
+          <tr class="total"><td colspan="2">使用可能金額（両替用）</td><td id="availableMoney" style="color:#0097e6;">0円</td></tr>
+          <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#eb4d4b;">0円</td></tr>
+        </table>
+      </div>
+      <button id="previewToggleBtn" onclick="togglePreview()">プレビューを非表示にする</button>
+    </div>
 
-  </div>
+  </div>
 </div>
 
 <script>
 const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
-  vaultTotal: 100000, usePin: true, pin: "1234",
-  denoms: {
-    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: false },
-    100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-red", isAvailB: false, isAvailC: false },
-    50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    5:     { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false }
-  }
+  vaultTotal: 100000, usePin: true, pin: "1234",
+  denoms: {
+    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
+    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
+    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
+    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: false },
+    100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-red", isAvailB: false, isAvailC: false },
+    50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
+    10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
+    5:     { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
+    1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false }
+  }
 };
 let config = JSON.parse(localStorage.getItem('vaultConfig')) || JSON.parse(JSON.stringify(defaultSettings));
 let savedInputs = JSON.parse(localStorage.getItem('vaultInputs')) || {};
 
 function init() {
-  const inputBody = document.getElementById("inputBody");
-  const exchangeBody = document.getElementById("exchangeBody");
-  const settingBarTbody = document.getElementById("settingBarTbody");
-  const settingCoinTbody = document.getElementById("settingCoinTbody");
-  inputBody.innerHTML = ""; exchangeBody.innerHTML = ""; settingBarTbody.innerHTML = ""; settingCoinTbody.innerHTML = "";
-  document.getElementById("set-vault-total").value = config.vaultTotal;
-  document.getElementById("set-use-pin").checked = config.usePin;
-  document.getElementById("set-pin").value = config.pin;
+  const inputBody = document.getElementById("inputBody");
+  const exchangeBody = document.getElementById("exchangeBody");
+  const settingBarTbody = document.getElementById("settingBarTbody");
+  const settingCoinTbody = document.getElementById("settingCoinTbody");
+  inputBody.innerHTML = ""; exchangeBody.innerHTML = ""; settingBarTbody.innerHTML = ""; settingCoinTbody.innerHTML = "";
+  document.getElementById("set-vault-total").value = config.vaultTotal;
+  document.getElementById("set-use-pin").checked = config.usePin;
+  document.getElementById("set-pin").value = config.pin;
 
-  prices.forEach(p => {
-    const s = config.denoms[p];
-    const valB = savedInputs[p]?.b || "";
-    const valC = savedInputs[p]?.c || "";
-    const getCell = (mode, type, val) => {
-      if (mode === "none") return "";
-      if (mode === "hidden") return "-";
-      return `<input type="number" class="in-${type}" data-price="${p}" value="${val}">`;
-    };
-    inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode, "bar", valB)}</td><td>${getCell(s.cMode, "coin", valC)}</td><td id="sum-${p}">0</td></tr>`;
-    exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
-    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
-    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
-  });
+  prices.forEach(p => {
+    const s = config.denoms[p];
+    const valB = savedInputs[p]?.b || "";
+    const valC = savedInputs[p]?.c || "";
+    const getCell = (mode, type, val) => {
+      if (mode === "none") return "";
+      if (mode === "hidden") return "-";
+      return `<input type="number" class="in-${type}" data-price="${p}" value="${val}">`;
+    };
+    inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode, "bar", valB)}</td><td>${getCell(s.cMode, "coin", valC)}</td><td id="sum-${p}">0</td></tr>`;
+    exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
+    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
+    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
+  });
 
-  document.querySelectorAll(".set-sync").forEach(el => {
-    el.addEventListener("input", (e) => {
-      const p = e.target.dataset.price; const key = e.target.dataset.key;
-      config.denoms[p][key] = e.target.type === "checkbox" ? e.target.checked : (e.target.type === "number" ? Number(e.target.value) : e.target.value);
-      calculate();
-    });
-    el.addEventListener("focus", (e) => highlightPreview(e.target.dataset.price, e.target.dataset.key));
-    el.addEventListener("blur", clearPreviewHighlight);
-  });
-  
-  const vaultTotalIn = document.getElementById("set-vault-total");
-  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal = Number(e.target.value); calculate(); });
-  vaultTotalIn.addEventListener("focus", () => { document.getElementById("diff").classList.add("preview-highlight"); document.getElementById("needMoney").classList.add("preview-highlight"); });
-  vaultTotalIn.addEventListener("blur", clearPreviewHighlight);
-  calculate();
+  document.querySelectorAll(".set-sync").forEach(el => {
+    el.addEventListener("input", (e) => {
+      const p = e.target.dataset.price; const key = e.target.dataset.key;
+      config.denoms[p][key] = e.target.type === "checkbox" ? e.target.checked : (e.target.type === "number" ? Number(e.target.value) : e.target.value);
+      calculate();
+    });
+    el.addEventListener("focus", (e) => highlightPreview(e.target.dataset.price, e.target.dataset.key));
+    el.addEventListener("blur", clearPreviewHighlight);
+  });
+  
+  const vaultTotalIn = document.getElementById("set-vault-total");
+  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal = Number(e.target.value); calculate(); });
+  vaultTotalIn.addEventListener("focus", () => { document.getElementById("diff").classList.add("preview-highlight"); document.getElementById("needMoney").classList.add("preview-highlight"); });
+  vaultTotalIn.addEventListener("blur", clearPreviewHighlight);
+  calculate();
 }
 
 function highlightPreview(price, key) {
-  clearPreviewHighlight();
-  const mainRow = document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
-  const exRow = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-  if(!mainRow || !exRow) return;
-  if (['perBar', 'tBar', 'bMode', 'isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
-  else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
+  clearPreviewHighlight();
+  const mainRow = document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
+  const exRow = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
+  if(!mainRow || !exRow) return;
+  if (['perBar', 'tBar', 'bMode', 'isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
+  else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
 }
 function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight')); }
 
 function calculate() {
-  let currentTotal = 0, needMoney = 0, availableMoney = 0;
-  let currentInputs = {};
-  prices.forEach(price => {
-    const s = config.denoms[price];
-    const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
-    const cIn = document.querySelector(`.in-coin[data-price="${price}"]`);
-    const barVal = Number(bIn?.value || 0);
-    const coinVal = Number(cIn?.value || 0);
-    currentInputs[price] = { b: bIn?.value || "", c: cIn?.value || "" };
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
-    let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
-    currentTotal += rowAmount;
-    document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
-    if (s.bMode === "hidden") bCell.innerText = "-";
-    else if (s.bMode !== "none") {
-      const dBar = barVal - s.tBar;
-      bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
-      bCell.className = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-      if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
-      if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
-    } else bCell.innerText = "-";
-    if (s.cMode === "hidden") cCell.innerText = "-";
-    else if (s.cMode !== "none") {
-      const dCoin = coinVal - s.tCoin;
-      cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
-      cCell.className = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-      if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
-      if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
-    } else cCell.innerText = "-";
-  });
-  document.getElementById("total").innerText = currentTotal.toLocaleString();
-  const diffVal = currentTotal - config.vaultTotal;
-  const dCell = document.getElementById("diff");
-  dCell.innerText = diffVal.toLocaleString();
-  dCell.className = (diffVal === 0) ? "diff-ok" : "diff-ng";
-  document.getElementById("needMoney").innerText = needMoney.toLocaleString() + "円";
-  document.getElementById("availableMoney").innerText = availableMoney.toLocaleString() + "円";
-  localStorage.setItem('vaultInputs', JSON.stringify(currentInputs));
+  let currentTotal = 0, needMoney = 0, availableMoney = 0;
+  let currentInputs = {};
+  prices.forEach(price => {
+    const s = config.denoms[price];
+    const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
+    const cIn = document.querySelector(`.in-coin[data-price="${price}"]`);
+    const barVal = Number(bIn?.value || 0);
+    const coinVal = Number(cIn?.value || 0);
+    currentInputs[price] = { b: bIn?.value || "", c: cIn?.value || "" };
+    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
+    const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
+    let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
+    currentTotal += rowAmount;
+    document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
+    if (s.bMode === "hidden") bCell.innerText = "-";
+    else if (s.bMode !== "none") {
+      const dBar = barVal - s.tBar;
+      bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
+      bCell.className = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
+      if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
+      if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
+    } else bCell.innerText = "-";
+    if (s.cMode === "hidden") cCell.innerText = "-";
+    else if (s.cMode !== "none") {
+      const dCoin = coinVal - s.tCoin;
+      cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
+      cCell.className = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
+      if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
+      if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
+    } else cCell.innerText = "-";
+  });
+  document.getElementById("total").innerText = currentTotal.toLocaleString();
+  const diffVal = currentTotal - config.vaultTotal;
+  const dCell = document.getElementById("diff");
+  dCell.innerText = diffVal.toLocaleString();
+  dCell.className = (diffVal === 0) ? "diff-ok" : "diff-ng";
+  document.getElementById("needMoney").innerText = needMoney.toLocaleString() + "円";
+  document.getElementById("availableMoney").innerText = availableMoney.toLocaleString() + "円";
+  localStorage.setItem('vaultInputs', JSON.stringify(currentInputs));
 }
 
 let tourStep = 0;
 const tourSteps = [
-  { id: "guide-step-1", msg: "1. 目標総額\n金庫にあるべき最終的な合計金額を入力します。" },
-  { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
-  { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
-  { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
-  { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると、余剰分を「両替に使えるお金」として集計します。" },
-  { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
-  { id: "saveBtn",      msg: "7. 保存\n最後にここを押してブラウザへ保存してください。" }
+  { id: "guide-step-1", msg: "1. 目標総額\n金庫にあるべき最終的な合計金額を入力します。" },
+  { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
+  { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
+  { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
+  { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると、余剰分を「両替に使えるお金」として集計します。" },
+  { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
+  { id: "saveBtn",      msg: "7. 保存\n最後にここを押してブラウザへ保存してください。" }
 ];
 function startTour() { tourStep = 0; document.getElementById("tourOverlay").style.display = "block"; showStep(); }
 function showStep() {
-  document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target"));
-  const step = tourSteps[tourStep]; const target = document.getElementById(step.id); const bubble = document.getElementById("tourBubble");
-  target.classList.add("highlight-target");
-  document.getElementById("tourMessage").innerText = `${tourStep + 1} / ${tourSteps.length}\n${step.msg}`;
-  bubble.style.display = "block"; 
-  const rect = target.getBoundingClientRect();
-  const bubbleRect = bubble.getBoundingClientRect();
-  let topPos = rect.bottom + 15;
-  if (topPos + bubbleRect.height > window.innerHeight) topPos = rect.top - bubbleRect.height - 15;
-  let leftPos = rect.left;
-  if (leftPos + bubbleRect.width > window.innerWidth) leftPos = window.innerWidth - bubbleRect.width - 20;
-  bubble.style.top = (window.scrollY + topPos) + "px"; bubble.style.left = Math.max(10, leftPos) + "px";
+  document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target"));
+  const step = tourSteps[tourStep]; const target = document.getElementById(step.id); const bubble = document.getElementById("tourBubble");
+  target.classList.add("highlight-target");
+  document.getElementById("tourMessage").innerText = `${tourStep + 1} / ${tourSteps.length}\n${step.msg}`;
+  bubble.style.display = "block"; 
+  const rect = target.getBoundingClientRect();
+  const bubbleRect = bubble.getBoundingClientRect();
+  let topPos = rect.bottom + 15;
+  if (topPos + bubbleRect.height > window.innerHeight) topPos = rect.top - bubbleRect.height - 15;
+  let leftPos = rect.left;
+  if (leftPos + bubbleRect.width > window.innerWidth) leftPos = window.innerWidth - bubbleRect.width - 20;
+  bubble.style.top = (window.scrollY + topPos) + "px"; bubble.style.left = Math.max(10, leftPos) + "px";
 }
 function nextTour() { tourStep < tourSteps.length - 1 ? (tourStep++, showStep()) : closeTour(); }
 function prevTour() { if (tourStep > 0) { tourStep--; showStep(); } }
 function closeTour() { document.getElementById("tourOverlay").style.display = "none"; document.getElementById("tourBubble").style.display = "none"; document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target")); }
 
 document.getElementById("settingBtn").addEventListener("click", () => {
-  document.getElementById("mainContainer").classList.add("setting-open");
-  document.getElementById("settingPanel").style.display = "block";
-  setTimeout(startTour, 300);
+  document.getElementById("mainContainer").classList.add("setting-open");
+  document.getElementById("settingPanel").style.display = "block";
+  setTimeout(startTour, 300);
 });
 function closeSetting() {
-  const container = document.getElementById("mainContainer");
-  const el = document.getElementById("floatingContainer");
-  container.classList.remove("setting-open");
-  document.getElementById("settingPanel").style.display = "none";
-  // 設定を閉じるときに位置をリセット
-  el.style.position = ""; el.style.top = ""; el.style.left = ""; el.style.bottom = ""; el.style.right = "";
-  clearPreviewHighlight(); closeTour();
+  const container = document.getElementById("mainContainer");
+  const el = document.getElementById("floatingContainer");
+  container.classList.remove("setting-open");
+  document.getElementById("settingPanel").style.display = "none";
+  // 設定を閉じるときに位置をリセット
+  el.style.position = ""; el.style.top = ""; el.style.left = ""; el.style.bottom = ""; el.style.right = "";
+  clearPreviewHighlight(); closeTour();
 }
 function togglePreview() {
-  const wrapper = document.getElementById("exchangeTableWrapper");
-  const btn = document.getElementById("previewToggleBtn");
-  const isHidden = wrapper.style.display === "none";
-  wrapper.style.display = isHidden ? "block" : "none";
-  btn.innerText = isHidden ? "プレビューを非表示にする" : "プレビューを表示する";
+  const wrapper = document.getElementById("exchangeTableWrapper");
+  const btn = document.getElementById("previewToggleBtn");
+  const isHidden = wrapper.style.display === "none";
+  wrapper.style.display = isHidden ? "block" : "none";
+  btn.innerText = isHidden ? "プレビューを非表示にする" : "プレビューを表示する";
 }
 document.getElementById("saveBtn").addEventListener("click", () => {
-  if (config.usePin && prompt("パスワードを入力してください") !== config.pin) return alert("認証失敗");
-  config.usePin = document.getElementById("set-use-pin").checked;
-  config.pin = document.getElementById("set-pin").value || "1234";
-  localStorage.setItem('vaultConfig', JSON.stringify(config));
-  alert("保存しました"); closeSetting(); init();
+  if (config.usePin && prompt("パスワードを入力してください") !== config.pin) return alert("認証失敗");
+  config.usePin = document.getElementById("set-use-pin").checked;
+  config.pin = document.getElementById("set-pin").value || "1234";
+  localStorage.setItem('vaultConfig', JSON.stringify(config));
+  alert("保存しました"); closeSetting(); init();
 });
 document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("クリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
 document.getElementById("inputBody").addEventListener("input", calculate);
 
 (function() {
-  const el = document.getElementById("floatingContainer");
-  let isDragging = false, offsetX, offsetY;
+  const el = document.getElementById("floatingContainer");
+  let isDragging = false, offsetX, offsetY;
 
-  const onStart = (e) => {
-    if (!document.getElementById("mainContainer").classList.contains("setting-open")) return;
-    if (e.target.closest('input, select, button, .close-panel')) return; 
-    isDragging = true;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    const rect = el.getBoundingClientRect();
-    offsetX = clientX - rect.left;
-    offsetY = clientY - rect.top;
-    el.style.transition = "none"; 
-    el.style.bottom = "auto"; el.style.right = "auto";
-  };
-  const onMove = (e) => {
-    if (!isDragging) return;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    el.style.left = (clientX - offsetX) + "px";
-    el.style.top = (clientY - offsetY) + "px";
-    if(e.cancelable) e.preventDefault();
-  };
-  const onEnd = () => { isDragging = false; el.style.transition = ""; };
+  const onStart = (e) => {
+    if (!document.getElementById("mainContainer").classList.contains("setting-open")) return;
+    if (e.target.closest('input, select, button, .close-panel')) return; 
+    isDragging = true;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    const rect = el.getBoundingClientRect();
+    offsetX = clientX - rect.left;
+    offsetY = clientY - rect.top;
+    el.style.transition = "none"; 
+    el.style.bottom = "auto"; el.style.right = "auto";
+  };
+  const onMove = (e) => {
+    if (!isDragging) return;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    el.style.left = (clientX - offsetX) + "px";
+    el.style.top = (clientY - offsetY) + "px";
+    if(e.cancelable) e.preventDefault();
+  };
+  const onEnd = () => { isDragging = false; el.style.transition = ""; };
 
-  el.addEventListener("mousedown", onStart);
-  el.addEventListener("touchstart", onStart, {passive: false});
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("touchmove", onMove, {passive: false});
-  window.addEventListener("mouseup", onEnd);
-  window.addEventListener("touchend", onEnd);
+  el.addEventListener("mousedown", onStart);
+  el.addEventListener("touchstart", onStart, {passive: false});
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("touchmove", onMove, {passive: false});
+  window.addEventListener("mouseup", onEnd);
+  window.addEventListener("touchend", onEnd);
 })();
 
 // 切り替え設定//
 
 document.addEventListener('focusin', function(e) {
-  if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
-    setTimeout(() => { e.target.select(); }, 10);
-  }
+  if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+    setTimeout(() => { e.target.select(); }, 10);
+  }
 });
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-    e.preventDefault(); 
-    
-    const barInputs = Array.from(document.querySelectorAll('.in-bar'));
-    const coinInputs = Array.from(document.querySelectorAll('.in-coin'));
-    
-    const navRoute = barInputs.concat(coinInputs);
-    
-    const currentIndex = navRoute.indexOf(e.target);
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    e.preventDefault(); 
+    
+    const barInputs = Array.from(document.querySelectorAll('.in-bar'));
+    const coinInputs = Array.from(document.querySelectorAll('.in-coin'));
+    
+    const navRoute = barInputs.concat(coinInputs);
+    
+    const currentIndex = navRoute.indexOf(e.target);
 
-    if (currentIndex > -1) {
-      const nextIndex = (currentIndex + 1) % navRoute.length;
-      navRoute[nextIndex].focus();
-    }
-  }
+    if (currentIndex > -1) {
+      const nextIndex = (currentIndex + 1) % navRoute.length;
+      navRoute[nextIndex].focus();
+    }
+  }
 });
   
 const originalInit = init;
 init = function() {
-  originalInit();
-  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode', 'numeric'));
+  originalInit();
+  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode', 'numeric'));
 };
 
 init();
