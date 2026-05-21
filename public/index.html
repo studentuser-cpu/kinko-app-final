@@ -91,11 +91,17 @@ input[type="number"] { width: 65px; }
 .settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
 
-/* ⬇︎ 両替表の両替使用オン時のセルCSS ⬇︎ */
-td.avail-active {
-  background-color: #e8f4fd !important;
-  border: 2px solid #0097e6 !important;
+/* ⬇︎ 今回の追加：両替表の両替使用オン時のエッジを囲むCSS ⬇︎ */
+/* 両替使用オン時の共通背景色 */
+td[class*="avail-"] {
+  background-color: #e8f4fd !important; /* 薄青背景 */
 }
+
+/* 外周の太い青枠の定義 (border-collapse: collapseに対応) */
+td.avail-top-edge { border-top: 2px solid #0097e6 !important; }
+td.avail-bottom-edge { border-bottom: 2px solid #0097e6 !important; }
+td.avail-left-edge { border-left: 2px solid #0097e6 !important; }
+td.avail-right-edge { border-right: 2px solid #0097e6 !important; }
 </style>
 </head>
 
@@ -134,10 +140,10 @@ td.avail-active {
       </div>
       <div class="help-col">
         <h4>2. 「両替使用」チェック</h4>
-        <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
+        <div>目標より<b>多く持っている分</b>を,右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
         <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
           <b>💡 例：1,000円札（目標35枚）</b><br>
-          手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
+          手元に40枚ある場合,余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
         </div>
       </div>
     </div>
@@ -294,7 +300,7 @@ function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight
 function calculate() {
   let currentTotal = 0, needMoney = 0, availableMoney = 0;
   let currentInputs = {};
-  prices.forEach(price => {
+  prices.forEach((price, i) => { // i (インデックス) を追加
     const s = config.denoms[price];
     const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
     const cIn = document.querySelector(`.in-coin[data-price="${price}"]`);
@@ -305,10 +311,6 @@ function calculate() {
     const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
     const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
     
-    // ▼ 今回の変更：両替用プレビュー表のセルにクラスを付与 ▼
-    if (bCell) { if (s.isAvailB) bCell.classList.add('avail-active'); else bCell.classList.remove('avail-active'); }
-    if (cCell) { if (s.isAvailC) cCell.classList.add('avail-active'); else cCell.classList.remove('avail-active'); }
-    
     let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
     currentTotal += rowAmount;
     document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
@@ -316,9 +318,24 @@ function calculate() {
     else if (s.bMode !== "none") {
       const dBar = barVal - s.tBar;
       bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
-      bCell.className = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-      // 先ほど付与したクラスが上書きされないように再追加
-      if (s.isAvailB) bCell.classList.add('avail-active');
+      // 既存の文字色・背景色クラス
+      let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
+
+      // ▼ 今回の追加：両替プレビュー表のエッジ判定ロジック ▼
+      let bEdgeClasses = [];
+      if (s.isAvailB) {
+        bEdgeClasses.push('avail-active'); // 強調背景色
+        // 上端の判定
+        if (i === 0 || !config.denoms[prices[i-1]].isAvailB) bEdgeClasses.push('avail-top-edge');
+        // 下端の判定
+        if (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailB) bEdgeClasses.push('avail-bottom-edge');
+        // 左端の判定 (棒金差列は常に強調領域の左端)
+        bEdgeClasses.push('avail-left-edge');
+        // 右端の判定 (右隣の枚数差がオフの場合のみ)
+        if (!s.isAvailC) bEdgeClasses.push('avail-right-edge');
+      }
+      bCell.className = bClass + ' ' + bEdgeClasses.join(' ');
+      
       if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
       if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
     } else bCell.innerText = "-";
@@ -326,9 +343,24 @@ function calculate() {
     else if (s.cMode !== "none") {
       const dCoin = coinVal - s.tCoin;
       cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
-      cCell.className = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-      // 先ほど付与したクラスが上書きされないように再追加
-      if (s.isAvailC) cCell.classList.add('avail-active');
+      // 既存の文字色・背景色クラス
+      let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
+
+      // ▼ 今回の追加：両替プレビュー表のエッジ判定ロジック ▼
+      let cEdgeClasses = [];
+      if (s.isAvailC) {
+        cEdgeClasses.push('avail-active'); // 強調背景色
+        // 上端の判定
+        if (i === 0 || !config.denoms[prices[i-1]].isAvailC) cEdgeClasses.push('avail-top-edge');
+        // 下端の判定
+        if (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailC) cEdgeClasses.push('avail-bottom-edge');
+        // 左端の判定 (左隣の棒金差がオフの場合のみ)
+        if (!s.isAvailB) cEdgeClasses.push('avail-left-edge');
+        // 右端の判定 (枚数差列は常に強調領域の右端)
+        cEdgeClasses.push('avail-right-edge');
+      }
+      cCell.className = cClass + ' ' + cEdgeClasses.join(' ');
+      
       if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
       if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
     } else cCell.innerText = "-";
@@ -349,7 +381,7 @@ const tourSteps = [
   { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
   { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
   { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
-  { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると、余剰分を「両替に使えるお金」として集計します。" },
+  { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると,余剰分を「両替に使えるお金」として集計します。" },
   { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
   { id: "saveBtn",      msg: "7. 保存\n最後にここを押してブラウザへ保存してください。" }
 ];
