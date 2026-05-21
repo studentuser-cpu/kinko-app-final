@@ -91,12 +91,7 @@ input[type="number"] { width: 65px; }
 .settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
 
-/* ⬇︎ 今回の追加：両替表の両替使用オン時のエッジを囲むCSS ⬇︎ */
-/* 両替使用オン時の共通背景色 */
-td[class*="avail-"] {
-  background-color: #e8f4fd !important; /* 薄青背景 */
-}
-
+/* ⬇︎ 両替表の両替使用オン時のエッジを囲むCSS ⬇︎ */
 /* 外周の太い青枠の定義 (border-collapse: collapseに対応) */
 td.avail-top-edge { border-top: 2px solid #0097e6 !important; }
 td.avail-bottom-edge { border-bottom: 2px solid #0097e6 !important; }
@@ -300,7 +295,7 @@ function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight
 function calculate() {
   let currentTotal = 0, needMoney = 0, availableMoney = 0;
   let currentInputs = {};
-  prices.forEach((price, i) => { // i (インデックス) を追加
+  prices.forEach((price, i) => { 
     const s = config.denoms[price];
     const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
     const cIn = document.querySelector(`.in-coin[data-price="${price}"]`);
@@ -318,20 +313,14 @@ function calculate() {
     else if (s.bMode !== "none") {
       const dBar = barVal - s.tBar;
       bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
-      // 既存の文字色・背景色クラス
+      
       let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
 
-      // ▼ 今回の追加：両替プレビュー表のエッジ判定ロジック ▼
       let bEdgeClasses = [];
       if (s.isAvailB) {
-        bEdgeClasses.push('avail-active'); // 強調背景色
-        // 上端の判定
         if (i === 0 || !config.denoms[prices[i-1]].isAvailB) bEdgeClasses.push('avail-top-edge');
-        // 下端の判定
         if (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailB) bEdgeClasses.push('avail-bottom-edge');
-        // 左端の判定 (棒金差列は常に強調領域の左端)
         bEdgeClasses.push('avail-left-edge');
-        // 右端の判定 (右隣の枚数差がオフの場合のみ)
         if (!s.isAvailC) bEdgeClasses.push('avail-right-edge');
       }
       bCell.className = bClass + ' ' + bEdgeClasses.join(' ');
@@ -343,20 +332,14 @@ function calculate() {
     else if (s.cMode !== "none") {
       const dCoin = coinVal - s.tCoin;
       cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
-      // 既存の文字色・背景色クラス
+      
       let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
 
-      // ▼ 今回の追加：両替プレビュー表のエッジ判定ロジック ▼
       let cEdgeClasses = [];
       if (s.isAvailC) {
-        cEdgeClasses.push('avail-active'); // 強調背景色
-        // 上端の判定
         if (i === 0 || !config.denoms[prices[i-1]].isAvailC) cEdgeClasses.push('avail-top-edge');
-        // 下端の判定
         if (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailC) cEdgeClasses.push('avail-bottom-edge');
-        // 左端の判定 (左隣の棒金差がオフの場合のみ)
         if (!s.isAvailB) cEdgeClasses.push('avail-left-edge');
-        // 右端の判定 (枚数差列は常に強調領域の右端)
         cEdgeClasses.push('avail-right-edge');
       }
       cCell.className = cClass + ' ' + cEdgeClasses.join(' ');
