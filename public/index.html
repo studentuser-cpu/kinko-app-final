@@ -91,8 +91,9 @@ input[type="number"] { width: 65px; }
 .settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
 
-/* ⬇︎ メイン画面の両替使用オン時の入力枠CSS ⬇︎ */
-.avail-active {
+/* ⬇︎ 両替表の両替使用オン時のセルCSS ⬇︎ */
+td.avail-active {
+  background-color: #e8f4fd !important;
   border: 2px solid #0097e6 !important;
 }
 </style>
@@ -298,15 +299,16 @@ function calculate() {
     const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
     const cIn = document.querySelector(`.in-coin[data-price="${price}"]`);
     
-    // ▼ ここに追加：設定に応じて入力欄にクラスを付け外し ▼
-    if (bIn) { if (s.isAvailB) bIn.classList.add('avail-active'); else bIn.classList.remove('avail-active'); }
-    if (cIn) { if (s.isAvailC) cIn.classList.add('avail-active'); else cIn.classList.remove('avail-active'); }
-    
     const barVal = Number(bIn?.value || 0);
     const coinVal = Number(cIn?.value || 0);
     currentInputs[price] = { b: bIn?.value || "", c: cIn?.value || "" };
     const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
     const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
+    
+    // ▼ 今回の変更：両替用プレビュー表のセルにクラスを付与 ▼
+    if (bCell) { if (s.isAvailB) bCell.classList.add('avail-active'); else bCell.classList.remove('avail-active'); }
+    if (cCell) { if (s.isAvailC) cCell.classList.add('avail-active'); else cCell.classList.remove('avail-active'); }
+    
     let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
     currentTotal += rowAmount;
     document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
@@ -315,6 +317,8 @@ function calculate() {
       const dBar = barVal - s.tBar;
       bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
       bCell.className = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
+      // 先ほど付与したクラスが上書きされないように再追加
+      if (s.isAvailB) bCell.classList.add('avail-active');
       if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
       if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
     } else bCell.innerText = "-";
@@ -323,6 +327,8 @@ function calculate() {
       const dCoin = coinVal - s.tCoin;
       cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
       cCell.className = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
+      // 先ほど付与したクラスが上書きされないように再追加
+      if (s.isAvailC) cCell.classList.add('avail-active');
       if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
       if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
     } else cCell.innerText = "-";
