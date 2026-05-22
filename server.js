@@ -1,119 +1,72 @@
 const express = require('express');
-const { Pool } = require('pg');
 const path = require('path');
-require('dotenv').config();
-
+const cors = require('cors');
 const app = express();
-app.use(express.json());
+
+app.use(cors());
+app.use(express.json()); 
+
+// 1. public フォルダの中身（index.html など）を公開する設定
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ============================================================
-// PostgreSQL 接続
-// Render の環境変数 DATABASE_URL が自動でセットされます
-// ============================================================
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+// 2. 金庫管理の「秘密の計算ロジック」
+app.post('/api/calculate', (req, res) => {
+  const { inputs, config } = req.body;
+  const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
+  
+  let currentTotal = 0, needMoney = 0, availableMoney = 0;
+  let results = {};
+
+  prices.forEach(price => {
+    const s = config.denoms[price];
+    const barVal = Number(inputs[price]?.b || 0);
+    const coinVal = Number(inputs[price]?.c || 0);
+
+    // 行の合計金額計算
+    let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
+    currentTotal += rowAmount;
+
+    // 棒金(Bar)の判定
+    let bText = "-", bClass = "";
+    if (s.bMode !== "hidden" && s.bMode !== "none") {
+      const dBar = barVal - s.tBar;
+      bText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
+      bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
+      if (dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
+      if (dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
+    }
+
+    // バラ(Coin)の判定
+    let cText = "-", cClass = "";
+    if (s.cMode !== "hidden" && s.cMode !== "none") {
+      const dCoin = coinVal - s.tCoin;
+      cText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
+      cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
+      if (dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
+      if (dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
+    }
+
+    results[price] = { rowAmount, bText, bClass, cText, cClass };
+  });
+
+  const diffVal = currentTotal - config.vaultTotal;
+
+  res.json({
+    currentTotal,
+    diffVal,
+    needMoney,
+    availableMoney,
+    results
+  });
 });
 
-// ============================================================
-// DB初期化（テーブルがなければ作成）
-// ============================================================
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS vault_records (
-      id          SERIAL PRIMARY KEY,
-      record_date DATE    NOT NULL UNIQUE,
-      inputs      JSONB   NOT NULL DEFAULT '{}',
-      config      JSONB,
-      saved_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-  `);
-  console.log('DB initialized');
-}
-
-// ============================================================
-// API: 日付ごとに保存（上書きOK）
-// POST /api/save
-// body: { date: "2026-05-22", inputs: {...}, config: {...} }
-// ============================================================
-app.post('/api/save', async (req, res) => {
-  const { date, inputs, config } = req.body;
-  if (!date || !inputs) return res.status(400).json({ error: 'date と inputs は必須です' });
-
-  try {
-    await pool.query(
-      `INSERT INTO vault_records (record_date, inputs, config)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (record_date)
-       DO UPDATE SET inputs = $2, config = $3, saved_at = NOW()`,
-      [date, JSON.stringify(inputs), JSON.stringify(config)]
-    );
-    res.json({ ok: true });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
+// 3. どんなアクセスが来ても index.html を表示させる設定（Render用）
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ============================================================
-// API: 特定日付のデータを取得
-// GET /api/load/:date  例) /api/load/2026-05-22
-// ============================================================
-app.get('/api/load/:date', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM vault_records WHERE record_date = $1',
-      [req.params.date]
-    );
-    res.json(result.rows[0] || null);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ============================================================
-// API: 直近30件の履歴一覧
-// GET /api/history
-// ============================================================
-app.get('/api/history', async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT record_date, saved_at
-       FROM vault_records
-       ORDER BY record_date DESC
-       LIMIT 30`
-    );
-    res.json(result.rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ============================================================
-// API: 特定日付のレコードを削除
-// DELETE /api/delete/:date
-// ============================================================
-app.delete('/api/delete/:date', async (req, res) => {
-  try {
-    await pool.query(
-      'DELETE FROM vault_records WHERE record_date = $1',
-      [req.params.date]
-    );
-    res.json({ ok: true });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ============================================================
-// 起動
-// ============================================================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  await initDB();
-  console.log(`Server running on port ${PORT}`);
+// Renderのポート番号に合わせる
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => { // ← ここに '0.0.0.0' を追加！
+    console.log(`Server is running on port ${PORT}`);
 });
