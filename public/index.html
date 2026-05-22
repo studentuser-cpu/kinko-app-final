@@ -102,6 +102,14 @@ td.avail-top-edge { border-top: 2px solid black !important; }
 td.avail-bottom-edge { border-bottom: 2px solid black !important; }
 td.avail-left-edge { border-left: 2px solid black !important; }
 td.avail-right-edge { border-right: 2px solid black !important; }
+
+/* 単一セルの場合は独立して黒く囲む */
+td.avail-single {
+  outline: 2px solid black !important;
+  outline-offset: -1px;
+  position: relative;
+  z-index: 10;
+}
 </style>
 </head>
 
@@ -323,16 +331,24 @@ function calculate() {
 
       let bEdgeClasses = [];
       if (s.isAvailB) {
-        if (i === 0 || !config.denoms[prices[i-1]].isAvailB) bEdgeClasses.push('avail-top-edge');
-        if (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailB) bEdgeClasses.push('avail-bottom-edge');
-        bEdgeClasses.push('avail-left-edge');
-        if (!s.isAvailC) bEdgeClasses.push('avail-right-edge');
+        let isTopEdge = (i === 0 || !config.denoms[prices[i-1]].isAvailB);
+        let isBottomEdge = (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailB);
+        let isRightEdge = !s.isAvailC;
+        if (isTopEdge && isBottomEdge && isRightEdge) {
+          bEdgeClasses.push('avail-single');
+        } else {
+          if (isTopEdge) bEdgeClasses.push('avail-top-edge');
+          if (isBottomEdge) bEdgeClasses.push('avail-bottom-edge');
+          bEdgeClasses.push('avail-left-edge');
+          if (isRightEdge) bEdgeClasses.push('avail-right-edge');
+        }
       }
       bCell.className = bClass + ' ' + bEdgeClasses.join(' ');
       
       if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
       if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
     } else bCell.innerText = "-";
+    
     if (s.cMode === "hidden") cCell.innerText = "-";
     else if (s.cMode !== "none") {
       const dCoin = coinVal - s.tCoin;
@@ -342,10 +358,17 @@ function calculate() {
 
       let cEdgeClasses = [];
       if (s.isAvailC) {
-        if (i === 0 || !config.denoms[prices[i-1]].isAvailC) cEdgeClasses.push('avail-top-edge');
-        if (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailC) cEdgeClasses.push('avail-bottom-edge');
-        if (!s.isAvailB) cEdgeClasses.push('avail-left-edge');
-        cEdgeClasses.push('avail-right-edge');
+        let isTopEdge = (i === 0 || !config.denoms[prices[i-1]].isAvailC);
+        let isBottomEdge = (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailC);
+        let isLeftEdge = !s.isAvailB;
+        if (isTopEdge && isBottomEdge && isLeftEdge) {
+          cEdgeClasses.push('avail-single');
+        } else {
+          if (isTopEdge) cEdgeClasses.push('avail-top-edge');
+          if (isBottomEdge) cEdgeClasses.push('avail-bottom-edge');
+          if (isLeftEdge) cEdgeClasses.push('avail-left-edge');
+          cEdgeClasses.push('avail-right-edge');
+        }
       }
       cCell.className = cClass + ' ' + cEdgeClasses.join(' ');
       
