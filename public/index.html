@@ -191,6 +191,8 @@ td.edge-right { border-right: 2px solid black !important; }
     <div class="header-right">
       <span class="sync-status" id="syncStatus"></span>
       <span class="header-user" id="headerUser"></span>
+      <!-- ★ 設定ボタンをここに移動しました -->
+      <button id="settingBtn" class="logout-btn">設定・説明</button>
       <button class="logout-btn" onclick="doLogout()">ログアウト</button>
     </div>
   </div>
@@ -286,12 +288,17 @@ td.edge-right { border-right: 2px solid black !important; }
           <tr><td>差額</td><td colspan="2"></td><td id="diff" class="diff-ok">0</td></tr>
         </table>
 
+        <!-- ★ アクションボタン群を変更しました -->
         <div class="action-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;">
-          <button id="printBtn" style="padding:10px 15px; background:#48dbfb; color:#222; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">印刷</button>
-          <button id="csvBtn" style="padding:10px 15px; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">CSV出力</button>
-          <button id="historyBtn" style="padding:10px 15px; background:#a29bfe; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">📋 履歴</button>
+          <div style="position:relative; display:inline-block;">
+            <button id="othersBtn" style="padding:10px 15px; background:#747d8c; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;" onclick="const m = document.getElementById('othersMenu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex';">その他 ▼</button>
+            <div id="othersMenu" style="display:none; position:absolute; bottom:100%; right:0; margin-bottom:5px; background:white; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.2); padding:10px; flex-direction:column; gap:8px; z-index:1000; border:1px solid #dcdde1;">
+              <button id="printBtn" style="padding:10px 15px; background:#48dbfb; color:#222; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">印刷</button>
+              <button id="csvBtn" style="padding:10px 15px; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">CSV出力</button>
+              <button id="historyBtn" style="padding:10px 15px; background:#a29bfe; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">📋 履歴</button>
+            </div>
+          </div>
           <button id="saveSnapshotBtn" style="padding:10px 15px; background:#fd9644; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">💾 保存</button>
-          <button id="settingBtn" style="padding:10px 15px; background:#2f3542; color:white; cursor:pointer; border:none; border-radius:6px;">設定・説明</button>
           <button id="resetBtn" style="padding:10px 15px; background:#ff7675; color:white; cursor:pointer; border:none; border-radius:6px;">クリア</button>
         </div>
       </div>
