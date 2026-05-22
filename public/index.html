@@ -29,7 +29,6 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
   overflow: hidden;
 }
 
-
 .container.setting-open #floatingContainer {
   position: fixed; 
   bottom: 20px; 
@@ -91,15 +90,15 @@ input[type="number"] { width: 65px; }
 .settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
 
-/* ⬇︎ 両替表の両替使用オン時の枠線を囲むCSS ⬇︎ */
-/* 両替使用オン時の共通スタイル（確実に四角で囲む） */
+/* ⬇︎ 両替使用オン時の共通スタイル（隣接セルを統合して囲む） ⬇︎ */
 td.avail-active {
   background-color: #e8f4fd !important; /* 薄青背景 */
-  outline: 2px solid black !important;  /* 独立した黒枠で他のセルと明確に区別 */
-  outline-offset: -1px;
-  position: relative;
-  z-index: 10;
 }
+/* JSで判定された外枠の縁のみ太い黒線にする */
+td.edge-top { border-top: 2px solid black !important; }
+td.edge-bottom { border-bottom: 2px solid black !important; }
+td.edge-left { border-left: 2px solid black !important; }
+td.edge-right { border-right: 2px solid black !important; }
 </style>
 </head>
 
@@ -298,6 +297,8 @@ function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight
 function calculate() {
   let currentTotal = 0, needMoney = 0, availableMoney = 0;
   let currentInputs = {};
+  
+  // 1. 各セルの計算と、ベースとなるクラス設定を行う
   prices.forEach((price, i) => { 
     const s = config.denoms[price];
     const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
@@ -320,11 +321,7 @@ function calculate() {
       bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
       
       let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-      let bEdgeClasses = [];
-      if (s.isAvailB) {
-        bEdgeClasses.push('avail-active');
-      }
-      bCell.className = bClass + ' ' + bEdgeClasses.join(' ');
+      bCell.className = bClass + (s.isAvailB ? ' avail-active' : ''); // 基本クラスと対象色を付与
       
       if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
       if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
@@ -337,16 +334,47 @@ function calculate() {
       cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
       
       let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-      let cEdgeClasses = [];
-      if (s.isAvailC) {
-        cEdgeClasses.push('avail-active');
-      }
-      cCell.className = cClass + ' ' + cEdgeClasses.join(' ');
+      cCell.className = cClass + (s.isAvailC ? ' avail-active' : ''); // 基本クラスと対象色を付与
       
       if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
       if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
     } else cCell.innerText = "-";
   });
+
+  // 2. 隣接セルを検知して、グループの外枠のみに黒い太線を付与する処理
+  const activeGrid = [];
+  prices.forEach((price) => {
+    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
+    activeGrid.push([
+      rowEx.children[1].classList.contains('avail-active'),
+      rowEx.children[2].classList.contains('avail-active')
+    ]);
+  });
+
+  prices.forEach((price, rowIndex) => {
+    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
+    const cells = [rowEx.children[1], rowEx.children[2]];
+
+    cells.forEach((cell, colIndex) => {
+      // 過去の枠線クラスをリセット
+      cell.classList.remove('edge-top', 'edge-bottom', 'edge-left', 'edge-right');
+      
+      if (activeGrid[rowIndex][colIndex]) {
+        // 上下左右に「同じく両替使用がオンになっているセル」があるかチェック
+        const hasTop = rowIndex > 0 && activeGrid[rowIndex - 1][colIndex];
+        const hasBottom = rowIndex < prices.length - 1 && activeGrid[rowIndex + 1][colIndex];
+        const hasLeft = colIndex > 0 && activeGrid[rowIndex][colIndex - 1];
+        const hasRight = colIndex < 1 && activeGrid[rowIndex][colIndex + 1];
+
+        // 隣接していない方向（= 外枠）にだけ太線を付与する
+        if (!hasTop) cell.classList.add('edge-top');
+        if (!hasBottom) cell.classList.add('edge-bottom');
+        if (!hasLeft) cell.classList.add('edge-left');
+        if (!hasRight) cell.classList.add('edge-right');
+      }
+    });
+  });
+
   document.getElementById("total").innerText = currentTotal.toLocaleString();
   const diffVal = currentTotal - config.vaultTotal;
   const dCell = document.getElementById("diff");
