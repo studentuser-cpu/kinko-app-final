@@ -217,7 +217,7 @@ td.edge-right { border-right: 2px solid black !important; }
           <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#eb4d4b;">0円</td></tr>
         </table>
       </div>
-      <button id="previewToggleBtn" onclick="togglePreview()">プレビューを非表示にする</button>
+      <button id="previewToggleBtn">プレビューを非表示にする</button>
     </div>
 
   </div>
@@ -447,28 +447,44 @@ document.getElementById("inputBody").addEventListener("input", calculate);
 
 (function() {
   const el = document.getElementById("floatingContainer");
+  const toggleBtn = document.getElementById("previewToggleBtn");
   let isDragging = false, offsetX, offsetY;
+  let startX, startY, hasMoved = false;
 
   const onStart = (e) => {
     if (!document.getElementById("mainContainer").classList.contains("setting-open")) return;
-    if (e.target.closest('input, select, button, .close-panel')) return; 
+    // フォーム操作部品のみドラッグ対象から除外し、ボタンでのドラッグを許容する
+    if (e.target.closest('input, select, .close-panel')) return; 
+    
     isDragging = true;
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    startX = clientX;
+    startY = clientY;
+    hasMoved = false;
+    
     const rect = el.getBoundingClientRect();
     offsetX = clientX - rect.left;
     offsetY = clientY - rect.top;
     el.style.transition = "none"; 
     el.style.bottom = "auto"; el.style.right = "auto";
   };
+  
   const onMove = (e) => {
     if (!isDragging) return;
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    
+    // 一定距離以上動いたらドラッグ移動とみなし、クリックを無効化するフラグを立てる
+    if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) {
+      hasMoved = true;
+    }
+    
     el.style.left = (clientX - offsetX) + "px";
     el.style.top = (clientY - offsetY) + "px";
     if(e.cancelable) e.preventDefault();
   };
+  
   const onEnd = () => { isDragging = false; el.style.transition = ""; };
 
   el.addEventListener("mousedown", onStart);
@@ -477,6 +493,16 @@ document.getElementById("inputBody").addEventListener("input", calculate);
   window.addEventListener("touchmove", onMove, {passive: false});
   window.addEventListener("mouseup", onEnd);
   window.addEventListener("touchend", onEnd);
+
+  // ボタンをクリックした時の動作（ドラッグして移動した場合は発火させない）
+  toggleBtn.addEventListener("click", (e) => {
+    if (hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    togglePreview();
+  });
 })();
 
 // 切り替え設定//
