@@ -119,6 +119,20 @@ td.edge-bottom { border-bottom: 2px solid black !important; }
 td.edge-left { border-left: 2px solid black !important; }
 td.edge-right { border-right: 2px solid black !important; }
 
+/* 履歴パネル */
+#historyOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000; align-items:center; justify-content:center; }
+#historyPanel { background:white; border-radius:12px; padding:25px; width:600px; max-width:95vw; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
+#historyPanel h3 { margin:0 0 15px 0; color:#1e3799; }
+#historyList { overflow-y:auto; flex:1; }
+.history-item { border:1px solid #e1e4e8; border-radius:8px; padding:12px 15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+.history-item-info { flex:1; }
+.history-item-date { font-size:13px; color:#636e72; }
+.history-item-total { font-size:16px; font-weight:bold; color:#1e3799; }
+.history-item-memo { font-size:12px; color:#2f3542; margin-top:3px; }
+.history-item-btns { display:flex; gap:6px; }
+.history-del-btn { background:#ff7675; color:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px; }
+.history-close-btn { background:#dfe6e9; color:#2f3542; border:none; border-radius:6px; padding:8px 20px; cursor:pointer; font-size:14px; margin-top:15px; align-self:flex-end; }
+
 @media print {
   body { background: white; -webkit-user-select: auto; user-select: auto; }
   .header-bar, #tourOverlay, #tourBubble, .modal-panel, #floatingContainer, .action-buttons { display: none !important; }
@@ -275,6 +289,8 @@ td.edge-right { border-right: 2px solid black !important; }
         <div class="action-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;">
           <button id="printBtn" style="padding:10px 15px; background:#48dbfb; color:#222; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">印刷</button>
           <button id="csvBtn" style="padding:10px 15px; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">CSV出力</button>
+          <button id="historyBtn" style="padding:10px 15px; background:#a29bfe; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">📋 履歴</button>
+          <button id="saveSnapshotBtn" style="padding:10px 15px; background:#fd9644; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">💾 保存</button>
           <button id="settingBtn" style="padding:10px 15px; background:#2f3542; color:white; cursor:pointer; border:none; border-radius:6px;">設定・説明</button>
           <button id="resetBtn" style="padding:10px 15px; background:#ff7675; color:white; cursor:pointer; border:none; border-radius:6px;">クリア</button>
         </div>
@@ -295,17 +311,24 @@ td.edge-right { border-right: 2px solid black !important; }
   </div>
 </div>
 
-<script>
+<!-- 履歴パネル -->
+<div id="historyOverlay">
+  <div id="historyPanel">
+    <h3>📋 過去の履歴</h3>
+    <div id="historyList"><p style="color:#aaa; text-align:center;">読み込み中...</p></div>
+    <button class="history-close-btn" onclick="closeHistory()">閉じる</button>
+  </div>
+</div>
 // ════════════════════════════════════════
 // ★ ここにFirebaseの設定を入力してください
 // ════════════════════════════════════════
 const firebaseConfig = {
- apiKey: "AIzaSyDyGmC0Bsx8m1WhMNKBwYwJEzJD-ZGOFf8",
-  authDomain: "kinko-23cf0.firebaseapp.com",
-  projectId: "kinko-23cf0",
-  storageBucket: "kinko-23cf0.firebasestorage.app",
-  messagingSenderId: "1459229783",
-  appId: "1:1459229783:web:e57ba867d7372ef70c3f12",
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -612,6 +635,62 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   closeSetting();
   init();
 });
+
+// ════════════════════════════════════════
+// 履歴の保存・表示
+// ════════════════════════════════════════
+document.getElementById("saveSnapshotBtn").addEventListener("click", async () => {
+  const memo = prompt("メモを入力してください（省略可）") ?? "";
+  const total = document.getElementById("total").innerText;
+  const diff  = document.getElementById("diff").innerText;
+  const need  = document.getElementById("needMoney").innerText;
+  const snapshot = { inputs: savedInputs, total, diff, need, memo, savedAt: new Date().toISOString() };
+  try {
+    setSyncStatus('保存中...');
+    const headers = await getAuthHeader();
+    const res = await fetch('/api/history/save', { method:'POST', headers, body: JSON.stringify({ snapshot }) });
+    const data = await res.json();
+    setSyncStatus(data.ok ? '💾 保存完了' : '⚠️ 保存失敗');
+  } catch(e) { setSyncStatus('⚠️ 保存失敗'); }
+  setTimeout(() => setSyncStatus(''), 3000);
+});
+
+document.getElementById("historyBtn").addEventListener("click", async () => {
+  document.getElementById("historyOverlay").style.display = 'flex';
+  document.getElementById("historyList").innerHTML = '<p style="color:#aaa;text-align:center;">読み込み中...</p>';
+  try {
+    const headers = await getAuthHeader();
+    const res = await fetch('/api/history/load', { method:'GET', headers });
+    const data = await res.json();
+    const list = document.getElementById("historyList");
+    if (!data.history || data.history.length === 0) { list.innerHTML = '<p style="color:#aaa;text-align:center;">履歴がありません</p>'; return; }
+    list.innerHTML = data.history.map(h => {
+      const d = new Date(h.savedAt);
+      const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      return `<div class="history-item">
+        <div class="history-item-info">
+          <div class="history-item-date">${dateStr}</div>
+          <div class="history-item-total">合計: ${h.total}円　差額: ${h.diff}円　補充: ${h.need}</div>
+          ${h.memo ? `<div class="history-item-memo">📝 ${h.memo}</div>` : ''}
+        </div>
+        <div class="history-item-btns">
+          <button class="history-del-btn" onclick="deleteHistory('${h.id}')">削除</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById("historyList").innerHTML = '<p style="color:#eb4d4b;text-align:center;">読み込み失敗</p>'; }
+});
+
+async function deleteHistory(id) {
+  if (!confirm("この履歴を削除しますか？")) return;
+  try {
+    const headers = await getAuthHeader();
+    await fetch('/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id }) });
+    document.getElementById("historyBtn").click();
+  } catch(e) { alert("削除失敗"); }
+}
+
+function closeHistory() { document.getElementById("historyOverlay").style.display = 'none'; }
 
 document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("数値をすべてクリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
 document.getElementById("inputBody").addEventListener("input", calculate);
