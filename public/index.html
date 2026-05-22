@@ -15,44 +15,14 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
 .container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; max-width: 100vw; box-sizing: border-box; }
 .tables-wrapper { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; width: 100%; transition: all 0.3s ease; }
 
-#floatingContainer { 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  gap: 10px; 
-}
+#floatingContainer { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+#exchangeTableWrapper { background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; }
 
-#exchangeTableWrapper {
-  background: white; 
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  overflow: hidden;
-}
-
-.container.setting-open #floatingContainer {
-  position: fixed; 
-  bottom: 20px; 
-  right: 20px; 
-  z-index: 1001; 
-  cursor: grab;
-  touch-action: none; 
-}
-.container.setting-open #exchangeTableWrapper {
-  background: rgba(255, 255, 255, 0.98);
-  border: 3px solid #1e3799; 
-  padding: 10px; 
-  border-radius: 12px;
-  box-shadow: 0 15px 50px rgba(0,0,0,0.4);
-  zoom: 0.8; max-height: 60vh; overflow-y: auto;
-}
+.container.setting-open #floatingContainer { position: fixed; bottom: 20px; right: 20px; z-index: 1001; cursor: grab; touch-action: none; }
+.container.setting-open #exchangeTableWrapper { background: rgba(255, 255, 255, 0.98); border: 3px solid #1e3799; padding: 10px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.4); zoom: 0.8; max-height: 60vh; overflow-y: auto; }
 .container.setting-open #floatingContainer:active { cursor: grabbing; }
 
-#previewToggleBtn { 
-  display: none; 
-  background: #1e3799; color: white; border: 2px solid white; 
-  border-radius: 20px; padding: 6px 16px; cursor: pointer; 
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-weight: bold; 
-}
+#previewToggleBtn { display: none; background: #1e3799; color: white; border: 2px solid white; border-radius: 20px; padding: 6px 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-weight: bold; }
 .container.setting-open #previewToggleBtn { display: block !important; }
 .container.setting-open #mainTableWrapper { display: none; }
 
@@ -96,7 +66,7 @@ td.edge-bottom { border-bottom: 2px solid black !important; }
 td.edge-left { border-left: 2px solid black !important; }
 td.edge-right { border-right: 2px solid black !important; }
 
-/* ⬇︎ 印刷用のスタイル（印刷時に不要なものを隠す） ⬇︎ */
+/* 印刷用のスタイル */
 @media print {
   body { background: white; -webkit-user-select: auto; user-select: auto; }
   .header-bar, #tourOverlay, #tourBubble, .modal-panel, #floatingContainer, .action-buttons { display: none !important; }
@@ -105,7 +75,6 @@ td.edge-right { border-right: 2px solid black !important; }
   table { border: 1px solid #ccc; box-shadow: none; margin-bottom: 20px; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
   td, th { padding: 8px; }
   input[type="number"] { border: none; outline: none; box-shadow: none; font-weight: bold; background: transparent; }
-  /* 両替プレビューも印刷したい場合のために表示化 */
   #exchangeTableWrapper { display: block; border: none; box-shadow: none; }
 }
 </style>
@@ -114,7 +83,7 @@ td.edge-right { border-right: 2px solid black !important; }
 <body>
 
 <div class="header-bar">
-  <div><strong>金庫管理</strong></div>
+  <div><strong>金庫管理 (クラウド同期版)</strong></div>
   <div id="user-info"></div>
 </div>
 
@@ -147,10 +116,6 @@ td.edge-right { border-right: 2px solid black !important; }
       <div class="help-col">
         <h4>2. 「両替使用」チェック</h4>
         <div>目標より<b>多く持っている分</b>を,右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
-        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-          <b>💡 例：1,000円札（目標35枚）</b><br>
-          手元に40枚ある場合,余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
-        </div>
       </div>
     </div>
 
@@ -199,7 +164,7 @@ td.edge-right { border-right: 2px solid black !important; }
     </div>
 
     <div style="text-align: right; margin-top: 25px;">
-      <button id="saveBtn" style="padding: 12px 40px; background: #2ed573; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:6px;">設定をブラウザに保存</button>
+      <button id="saveBtn" style="padding: 12px 40px; background: #2ed573; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:6px;">設定をクラウドに保存</button>
     </div>
   </div>
 
@@ -212,7 +177,6 @@ td.edge-right { border-right: 2px solid black !important; }
         <tr><td>差額</td><td colspan="2"></td><td id="diff" class="diff-ok">0</td></tr>
       </table>
       
-      <!-- ⬇︎ ボタンエリアに追加 ⬇︎ -->
       <div class="action-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;">
         <button id="printBtn" style="padding:10px 15px; background:#48dbfb; color:#222; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">印刷</button>
         <button id="csvBtn" style="padding:10px 15px; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">CSV出力</button>
@@ -237,7 +201,29 @@ td.edge-right { border-right: 2px solid black !important; }
   </div>
 </div>
 
-<script>
+<!-- moduleとして読み込むことでFirebaseの最新ライブラリを使用可能にします -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Firebaseの構成情報
+const firebaseConfig = {
+  apiKey: "AIzaSyB1W7lSlf2UPqv17rj5rMonWJQYMDpKqr0",
+  authDomain: "kinko-app-d9ebf.firebaseapp.com",
+  projectId: "kinko-app-d9ebf",
+  storageBucket: "kinko-app-d9ebf.firebasestorage.app",
+  messagingSenderId: "293547536849",
+  appId: "1:293547536849:web:67db95f80b682e558130f0",
+  measurementId: "G-TG66ETN3S3"
+};
+
+// Firebase初期化
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// データベースの保存先パス（"vaultData"コレクションの"store1"というドキュメントに保存）
+const docRef = doc(db, "vaultData", "store1");
+
 const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: true, pin: "1234",
@@ -253,8 +239,58 @@ const defaultSettings = {
     1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false }
   }
 };
-let config = JSON.parse(localStorage.getItem('vaultConfig')) || JSON.parse(JSON.stringify(defaultSettings));
-let savedInputs = JSON.parse(localStorage.getItem('vaultInputs')) || {};
+
+let config = JSON.parse(JSON.stringify(defaultSettings));
+let savedInputs = {};
+let isInitialized = false;
+
+// UIから呼び出せるように関数をグローバル（window）に紐付け
+window.closeSetting = closeSetting;
+window.prevTour = prevTour;
+window.nextTour = nextTour;
+window.closeTour = closeTour;
+
+// クラウドからのデータ監視（リアルタイム同期の魔法）
+onSnapshot(docRef, (snap) => {
+  if (snap.exists()) {
+    const data = snap.data();
+    if (data.config) config = data.config;
+    if (data.inputs) savedInputs = data.inputs;
+  }
+  
+  if (!isInitialized) {
+    init(); // 初回のみDOMを生成
+    isInitialized = true;
+  } else {
+    // 別のタブ・端末からの書き込みがあった場合のみUIを更新（入力フォーカスの消失を防ぐため）
+    if (!snap.metadata.hasPendingWrites) {
+      updateDOMFromData();
+      calculate(false); // 同期による更新時は再保存しない
+    }
+  }
+});
+
+// クラウドから受け取ったデータを画面上の入力欄に反映する関数
+function updateDOMFromData() {
+  prices.forEach(p => {
+    const bIn = document.querySelector(`.in-bar[data-price="${p}"]`);
+    const cIn = document.querySelector(`.in-coin[data-price="${p}"]`);
+    if (bIn && document.activeElement !== bIn) bIn.value = savedInputs[p]?.b || "";
+    if (cIn && document.activeElement !== cIn) cIn.value = savedInputs[p]?.c || "";
+  });
+  const vt = document.getElementById("set-vault-total");
+  if (vt && document.activeElement !== vt) vt.value = config.vaultTotal;
+}
+
+// クラウドへ保存する関数（連続タイピング時に何度も通信しないよう0.5秒のディレイをかける）
+let saveTimeout;
+function saveToFirebase() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    setDoc(docRef, { config: config, inputs: savedInputs }, { merge: true })
+      .catch(err => console.error("データ保存エラー:", err));
+  }, 500); 
+}
 
 function init() {
   const inputBody = document.getElementById("inputBody");
@@ -273,7 +309,7 @@ function init() {
     const getCell = (mode, type, val) => {
       if (mode === "none") return "";
       if (mode === "hidden") return "-";
-      return `<input type="number" class="in-${type}" data-price="${p}" value="${val}">`;
+      return `<input type="number" class="in-${type}" data-price="${p}" value="${val}" inputmode="numeric">`;
     };
     inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode, "bar", valB)}</td><td>${getCell(s.cMode, "coin", valC)}</td><td id="sum-${p}">0</td></tr>`;
     exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
@@ -285,17 +321,17 @@ function init() {
     el.addEventListener("input", (e) => {
       const p = e.target.dataset.price; const key = e.target.dataset.key;
       config.denoms[p][key] = e.target.type === "checkbox" ? e.target.checked : (e.target.type === "number" ? Number(e.target.value) : e.target.value);
-      calculate();
+      calculate(true);
     });
     el.addEventListener("focus", (e) => highlightPreview(e.target.dataset.price, e.target.dataset.key));
     el.addEventListener("blur", clearPreviewHighlight);
   });
   
   const vaultTotalIn = document.getElementById("set-vault-total");
-  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal = Number(e.target.value); calculate(); });
+  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal = Number(e.target.value); calculate(true); });
   vaultTotalIn.addEventListener("focus", () => { document.getElementById("diff").classList.add("preview-highlight"); document.getElementById("needMoney").classList.add("preview-highlight"); });
   vaultTotalIn.addEventListener("blur", clearPreviewHighlight);
-  calculate();
+  calculate(false);
 }
 
 function highlightPreview(price, key) {
@@ -308,7 +344,7 @@ function highlightPreview(price, key) {
 }
 function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight')); }
 
-function calculate() {
+function calculate(triggerSave = true) {
   let currentTotal = 0, needMoney = 0, availableMoney = 0;
   let currentInputs = {};
   
@@ -320,6 +356,7 @@ function calculate() {
     const barVal = Number(bIn?.value || 0);
     const coinVal = Number(cIn?.value || 0);
     currentInputs[price] = { b: bIn?.value || "", c: cIn?.value || "" };
+    
     const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
     const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
     
@@ -379,7 +416,12 @@ function calculate() {
   dCell.className = (diffVal === 0) ? "diff-ok" : "diff-ng";
   document.getElementById("needMoney").innerText = needMoney.toLocaleString() + "円";
   document.getElementById("availableMoney").innerText = availableMoney.toLocaleString() + "円";
-  localStorage.setItem('vaultInputs', JSON.stringify(currentInputs));
+  
+  savedInputs = currentInputs;
+  
+  if (triggerSave) {
+    saveToFirebase();
+  }
 }
 
 let tourStep = 0;
@@ -390,7 +432,7 @@ const tourSteps = [
   { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
   { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると,余剰分を「両替に使えるお金」として集計します。" },
   { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
-  { id: "saveBtn",      msg: "7. 保存\n最後にここを押してブラウザへ保存してください。" }
+  { id: "saveBtn",      msg: "7. 保存\n最後にここを押して設定をクラウドへ保存してください。" }
 ];
 function startTour() { tourStep = 0; document.getElementById("tourOverlay").style.display = "block"; showStep(); }
 function showStep() {
@@ -431,58 +473,56 @@ function togglePreview() {
   wrapper.style.display = isHidden ? "block" : "none";
   btn.innerText = isHidden ? "非表示" : "表示";
 }
+
+// 保存ボタン（クラウドに強制セーブ）
 document.getElementById("saveBtn").addEventListener("click", () => {
   if (config.usePin && prompt("パスワードを入力してください") !== config.pin) return alert("認証失敗");
   config.usePin = document.getElementById("set-use-pin").checked;
   config.pin = document.getElementById("set-pin").value || "1234";
-  localStorage.setItem('vaultConfig', JSON.stringify(config));
-  alert("保存しました"); closeSetting(); init();
+  
+  setDoc(docRef, { config: config, inputs: savedInputs }, { merge: true }).then(() => {
+    alert("クラウドに設定を保存しました"); 
+    closeSetting(); 
+    init();
+  });
 });
-document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("数値をすべてクリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
-document.getElementById("inputBody").addEventListener("input", calculate);
 
-/* ⬇︎ 追加機能：印刷 ⬇︎ */
+document.getElementById("resetBtn").addEventListener("click", () => { 
+  if (confirm("数値をすべてクリアしますか？")) { 
+    document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); 
+    calculate(true); 
+  } 
+});
+
+// 入力イベントで計算＆自動保存を発火
+document.getElementById("inputBody").addEventListener("input", () => calculate(true));
+
+// 印刷機能
 document.getElementById("printBtn").addEventListener("click", () => {
   window.print();
 });
 
-/* ⬇︎ 追加機能：CSV出力 ⬇︎ */
+// CSV出力機能
 document.getElementById("csvBtn").addEventListener("click", () => {
-  // UTF-8のBOM（これがないとExcelで開いた時に文字化けします）
   let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-  
-  // ヘッダー行作成
   csvContent += "金額,棒金(入力),枚数(入力),合計,棒金差,枚数差\n";
-  
-  // 各行のデータを取得
   prices.forEach(p => {
     const barIn = document.querySelector(`.in-bar[data-price="${p}"]`);
     const coinIn = document.querySelector(`.in-coin[data-price="${p}"]`);
     const barVal = barIn ? barIn.value : "";
     const coinVal = coinIn ? coinIn.value : "";
     const sumVal = document.getElementById(`sum-${p}`).innerText.replace(/,/g, "");
-    
     const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${p}"]`);
     const dBar = rowEx.children[1].innerText;
     const dCoin = rowEx.children[2].innerText;
-    
     csvContent += `${p},${barVal},${coinVal},${sumVal},${dBar},${dCoin}\n`;
   });
-  
-  // 合計などのまとめ部分
   const total = document.getElementById("total").innerText.replace(/,/g, "");
   const diff = document.getElementById("diff").innerText.replace(/,/g, "");
   const available = document.getElementById("availableMoney").innerText.replace(/,/g, "").replace("円", "");
   const need = document.getElementById("needMoney").innerText.replace(/,/g, "").replace("円", "");
+  csvContent += `\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n使用可能金額,,,${available}\n補充が必要な金額,,,${need}\n`;
   
-  csvContent += `\n`;
-  csvContent += `項目,,,金額\n`;
-  csvContent += `全体合計,,,${total}\n`;
-  csvContent += `差額,,,${diff}\n`;
-  csvContent += `使用可能金額,,,${available}\n`;
-  csvContent += `補充が必要な金額,,,${need}\n`;
-
-  // ダウンロード処理
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   const dateStr = new Date().toISOString().slice(0,10);
@@ -493,6 +533,7 @@ document.getElementById("csvBtn").addEventListener("click", () => {
   document.body.removeChild(link);
 });
 
+// ド Guidance & Drag UI
 (function() {
   const el = document.getElementById("floatingContainer");
   const toggleBtn = document.getElementById("previewToggleBtn");
@@ -553,14 +594,6 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
-  
-const originalInit = init;
-init = function() {
-  originalInit();
-  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode', 'numeric'));
-};
-
-init();
 </script>
 </body>
 </html>
