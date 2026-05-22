@@ -206,21 +206,24 @@ td.edge-right { border-right: 2px solid black !important; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// 新しいFirebase構成
+// Firebaseの構成情報
 const firebaseConfig = {
-  apiKey: "AIzaSyDyGmC0Bsx8m1WhMNKBwYwJEzJD-ZGOFf8",
-  authDomain: "kinko-23cf0.firebaseapp.com",
-  databaseURL: "https://kinko-23cf0-default-rtdb.firebaseio.com",
-  projectId: "kinko-23cf0",
-  storageBucket: "kinko-23cf0.firebasestorage.app",
-  messagingSenderId: "1459229783",
-  appId: "1:1459229783:web:e57ba867d7372ef70c3f12",
-  measurementId: "G-0KHWDKSYP6"
+  apiKey: "AIzaSyB1W7lSlf2UPqv17rj5rMonWJQYMDpKqr0",
+  authDomain: "kinko-app-d9ebf.firebaseapp.com",
+  projectId: "kinko-app-d9ebf",
+  storageBucket: "kinko-app-d9ebf.firebasestorage.app",
+  messagingSenderId: "293547536849",
+  appId: "1:293547536849:web:67db95f80b682e558130f0",
+  measurementId: "G-TG66ETN3S3"
 };
 
+// Firebase初期化
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const dbRef = ref(db, "vaultData/store1");
+const db = getFirestore(app);
+
+// データベースの保存先パス（"vaultData"コレクションの"store1"というドキュメントに保存）
+const docRef = doc(db, "vaultData", "store1");
+
 const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: true, pin: "1234",
