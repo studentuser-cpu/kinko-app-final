@@ -91,21 +91,11 @@ input[type="number"] { width: 65px; }
 .settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
 
-/* ⬇︎ 両替表の両替使用オン時のエッジを囲むCSS ⬇︎ */
-/* 両替使用オン時の共通背景色 */
-td[class*="avail-"] {
+/* ⬇︎ 両替表の両替使用オン時の枠線を囲むCSS ⬇︎ */
+/* 両替使用オン時の共通スタイル（確実に四角で囲む） */
+td.avail-active {
   background-color: #e8f4fd !important; /* 薄青背景 */
-}
-
-/* 外周の太い枠の定義 (青から黒に変更) */
-td.avail-top-edge { border-top: 2px solid black !important; }
-td.avail-bottom-edge { border-bottom: 2px solid black !important; }
-td.avail-left-edge { border-left: 2px solid black !important; }
-td.avail-right-edge { border-right: 2px solid black !important; }
-
-/* 単一セルの場合は独立して黒く囲む */
-td.avail-single {
-  outline: 2px solid black !important;
+  outline: 2px solid black !important;  /* 独立した黒枠で他のセルと明確に区別 */
   outline-offset: -1px;
   position: relative;
   z-index: 10;
@@ -322,26 +312,17 @@ function calculate() {
     let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
     currentTotal += rowAmount;
     document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
+    
+    // 棒金差のセル処理
     if (s.bMode === "hidden") bCell.innerText = "-";
     else if (s.bMode !== "none") {
       const dBar = barVal - s.tBar;
       bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
       
       let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-
       let bEdgeClasses = [];
       if (s.isAvailB) {
-        let isTopEdge = (i === 0 || !config.denoms[prices[i-1]].isAvailB);
-        let isBottomEdge = (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailB);
-        let isRightEdge = !s.isAvailC;
-        if (isTopEdge && isBottomEdge && isRightEdge) {
-          bEdgeClasses.push('avail-single');
-        } else {
-          if (isTopEdge) bEdgeClasses.push('avail-top-edge');
-          if (isBottomEdge) bEdgeClasses.push('avail-bottom-edge');
-          bEdgeClasses.push('avail-left-edge');
-          if (isRightEdge) bEdgeClasses.push('avail-right-edge');
-        }
+        bEdgeClasses.push('avail-active');
       }
       bCell.className = bClass + ' ' + bEdgeClasses.join(' ');
       
@@ -349,26 +330,16 @@ function calculate() {
       if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
     } else bCell.innerText = "-";
     
+    // 枚数差のセル処理
     if (s.cMode === "hidden") cCell.innerText = "-";
     else if (s.cMode !== "none") {
       const dCoin = coinVal - s.tCoin;
       cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
       
       let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-
       let cEdgeClasses = [];
       if (s.isAvailC) {
-        let isTopEdge = (i === 0 || !config.denoms[prices[i-1]].isAvailC);
-        let isBottomEdge = (i === prices.length - 1 || !config.denoms[prices[i+1]].isAvailC);
-        let isLeftEdge = !s.isAvailB;
-        if (isTopEdge && isBottomEdge && isLeftEdge) {
-          cEdgeClasses.push('avail-single');
-        } else {
-          if (isTopEdge) cEdgeClasses.push('avail-top-edge');
-          if (isBottomEdge) cEdgeClasses.push('avail-bottom-edge');
-          if (isLeftEdge) cEdgeClasses.push('avail-left-edge');
-          cEdgeClasses.push('avail-right-edge');
-        }
+        cEdgeClasses.push('avail-active');
       }
       cCell.className = cClass + ' ' + cEdgeClasses.join(' ');
       
