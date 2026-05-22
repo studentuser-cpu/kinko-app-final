@@ -50,8 +50,8 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
 #previewToggleBtn { 
   display: none; 
   background: #1e3799; color: white; border: 2px solid white; 
-  border-radius: 20px; padding: 6px 16px; cursor: pointer; 
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-weight: bold; 
+  border-radius: 30px; padding: 12px 24px; cursor: pointer; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 14px; font-weight: bold; 
 }
 .container.setting-open #previewToggleBtn { display: block !important; }
 .container.setting-open #mainTableWrapper { display: none; }
@@ -217,7 +217,7 @@ td.edge-right { border-right: 2px solid black !important; }
           <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#eb4d4b;">0円</td></tr>
         </table>
       </div>
-      <button id="previewToggleBtn">非表示</button>
+      <button id="previewToggleBtn">プレビューを非表示にする</button>
     </div>
 
   </div>
@@ -433,7 +433,7 @@ function togglePreview() {
   const btn = document.getElementById("previewToggleBtn");
   const isHidden = wrapper.style.display === "none";
   wrapper.style.display = isHidden ? "block" : "none";
-  btn.innerText = isHidden ? "非表示" : "表示";
+  btn.innerText = isHidden ? "プレビューを非表示にする" : "プレビューを表示する";
 }
 document.getElementById("saveBtn").addEventListener("click", () => {
   if (config.usePin && prompt("パスワードを入力してください") !== config.pin) return alert("認証失敗");
