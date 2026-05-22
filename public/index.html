@@ -9,200 +9,200 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <style>
-body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #f0f2f5; padding: 0; margin: 0; color: #2f3542; }
-.header-bar { display: flex; justify-content: space-between; align-items: center; background: #1e3799; color: white; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.login-btn { display: none; }
-.container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; max-width: 100vw; box-sizing: border-box; }
-.tables-wrapper { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; width: 100%; transition: all 0.3s ease; }
+/* ===== ベース ===== */
+body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family:"Helvetica Neue",Arial,"Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,sans-serif;background:#f0f2f5;padding:0;margin:0;color:#2f3542;}
 
-#floatingContainer { 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  gap: 10px; 
-}
+/* ===== ヘッダー ===== */
+.header-bar{display:flex;justify-content:space-between;align-items:center;background:#1e3799;color:white;padding:10px 20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
 
-#exchangeTableWrapper {
-  background: white; 
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  overflow: hidden;
-}
+/* ===== 日付バー ===== */
+#datebar{display:flex;align-items:center;gap:10px;background:#fff;border-bottom:2px solid #e1e4e8;padding:10px 20px;flex-wrap:wrap;}
+#datebar label{font-weight:bold;font-size:14px;color:#1e3799;}
+#dateInput{font-size:15px;padding:6px 10px;border:1.5px solid #ced4da;border-radius:6px;outline:none;-webkit-user-select:auto;user-select:auto;}
+#dateInput:focus{border-color:#1e3799;}
+.date-btn{padding:7px 16px;font-size:13px;font-weight:bold;border:none;border-radius:6px;cursor:pointer;white-space:nowrap;}
+#saveServerBtn{background:#2ed573;color:white;}
+#saveServerBtn:hover{background:#26c465;}
+#historyBtn{background:#1e3799;color:white;}
+#historyBtn:hover{background:#2c52d0;}
+#saveMsgArea{font-size:13px;color:#636e72;}
 
-.container.setting-open #floatingContainer {
-  position: fixed; 
-  bottom: 20px; 
-  right: 20px; 
-  z-index: 1001; 
-  cursor: grab;
-  touch-action: none; 
-}
-.container.setting-open #exchangeTableWrapper {
-  background: rgba(255, 255, 255, 0.98);
-  border: 3px solid #1e3799; 
-  padding: 10px; 
-  border-radius: 12px;
-  box-shadow: 0 15px 50px rgba(0,0,0,0.4);
-  zoom: 0.8; max-height: 60vh; overflow-y: auto;
-}
-.container.setting-open #floatingContainer:active { cursor: grabbing; }
+/* ===== 履歴パネル ===== */
+#historyPanel{display:none;position:fixed;top:0;right:0;width:300px;max-width:90vw;height:100%;background:white;z-index:3000;box-shadow:-4px 0 20px rgba(0,0,0,0.2);flex-direction:column;}
+#historyPanel.open{display:flex;}
+#historyHeader{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#1e3799;color:white;}
+#historyHeader h3{margin:0;font-size:16px;}
+#historyClose{background:none;border:none;color:white;font-size:22px;cursor:pointer;}
+#historyList{flex:1;overflow-y:auto;padding:10px;}
+.history-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;margin-bottom:6px;border:1px solid #e1e4e8;cursor:pointer;transition:background 0.15s;}
+.history-item:hover{background:#eef2f7;}
+.history-item.active{background:#dbe4ff;border-color:#1e3799;}
+.history-date{font-weight:bold;font-size:14px;color:#2f3542;}
+.history-time{font-size:11px;color:#b2bec3;margin-top:2px;}
+.history-del{background:none;border:none;color:#eb4d4b;font-size:18px;cursor:pointer;padding:2px 6px;border-radius:4px;}
+.history-del:hover{background:#fff5f5;}
+#historyEmpty{text-align:center;color:#b2bec3;font-size:14px;padding:30px 0;}
+#historyOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:2999;}
+#historyOverlay.open{display:block;}
 
-#previewToggleBtn { 
-  display: none; 
-  background: #1e3799; color: white; border: 2px solid white; 
-  border-radius: 20px; padding: 6px 16px; cursor: pointer; 
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-weight: bold; 
-}
-.container.setting-open #previewToggleBtn { display: block !important; }
-.container.setting-open #mainTableWrapper { display: none; }
-
-table { border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; white-space: nowrap; }
-td, th { border: 1px solid #e1e4e8; padding: 10px; text-align: center; min-width: 80px; transition: all 0.2s; }
-th { background: #1e3799; color: white; font-size: 13px; }
-input[type="number"], input[type="text"], input[type="password"], select { text-align: center; font-size: 14px; border: 1px solid #ced4da; border-radius: 4px; padding: 3px; outline: none; }
-input[type="number"]:focus, select:focus { border-color: #fbc531; box-shadow: 0 0 5px rgba(251, 197, 49, 0.5); }
-input[type="number"] { width: 65px; }
-.total { font-weight: bold; background: #f8f9fa; }
-.diff-ok { color: #2f3542; }
-.diff-ng { color: #eb4d4b; font-weight: bold; }
-.need { background: #ffeaa7; font-weight: bold; }
-.txt-minus { color: #eb4d4b; font-weight: bold; }
-.txt-plus  { color: #0097e6; font-weight: bold; }
-.txt-ok    { color: #2f3542; font-weight: bold; }
-.bg-red    { background-color: #ffcccc; }
-.bg-yellow { background-color: #ffeaa7; }
-.bg-ok      { background-color: #f1f2f6; }
-.modal-panel { display: none; background: #fff; border-radius: 12px; border: 1px solid #dcdde1; padding: 25px; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.2); width: 1100px; max-width: 98%; margin-bottom: 40px; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f2f6; padding-bottom: 10px; }
-.help-section { background: #f8f9fa; border: 1px solid #d1d8e0; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; }
-@media(min-width: 768px) { .help-section { flex-direction: row; } }
-.help-col { flex: 1; font-size: 13px; line-height: 1.6; }
-.help-col h4 { margin: 0 0 8px 0; color: #1e3799; border-bottom: 2px solid #1e3799; display: inline-block; }
-.help-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; width: 36px; text-align: center; margin-right: 5px; }
-.security-section { background: #fff3cd; border: 1px solid #ffe69c; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
-.tour-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; pointer-events: none; }
-.tour-bubble { position: absolute; background: #1e3799; color: white; padding: 15px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 2001; width: 260px; font-size: 14px; pointer-events: auto; white-space: pre-wrap; line-height: 1.5; }
-.tour-btn-group { display: flex; justify-content: space-between; margin-top: 10px; }
-.tour-btn { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 3px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
-.highlight-target { outline: 6px solid #fbc531 !important; outline-offset: 2px; position: relative; z-index: 2001 !important; }
-.preview-highlight { box-shadow: inset 0 0 0 3px #e15f41; background-color: rgba(251, 197, 49, 0.2) !important; position: relative; }
-.settings-tables-container { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
-.settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
-
-td.avail-active { background-color: #e8f4fd !important; }
-td.edge-top { border-top: 2px solid black !important; }
-td.edge-bottom { border-bottom: 2px solid black !important; }
-td.edge-left { border-left: 2px solid black !important; }
-td.edge-right { border-right: 2px solid black !important; }
-
-/* ⬇︎ 印刷用のスタイル（印刷時に不要なものを隠す） ⬇︎ */
-@media print {
-  body { background: white; -webkit-user-select: auto; user-select: auto; }
-  .header-bar, #tourOverlay, #tourBubble, .modal-panel, #floatingContainer, .action-buttons { display: none !important; }
-  .container { padding: 0; gap: 10px; }
-  .tables-wrapper { display: block; }
-  table { border: 1px solid #ccc; box-shadow: none; margin-bottom: 20px; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
-  td, th { padding: 8px; }
-  input[type="number"] { border: none; outline: none; box-shadow: none; font-weight: bold; background: transparent; }
-  /* 両替プレビューも印刷したい場合のために表示化 */
-  #exchangeTableWrapper { display: block; border: none; box-shadow: none; }
+/* ===== 既存スタイル ===== */
+.container{display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px;max-width:100vw;box-sizing:border-box;}
+.tables-wrapper{display:flex;gap:30px;justify-content:center;align-items:flex-start;flex-wrap:wrap;width:100%;transition:all 0.3s ease;}
+#floatingContainer{display:flex;flex-direction:column;align-items:center;gap:10px;}
+#exchangeTableWrapper{background:white;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);overflow:hidden;}
+.container.setting-open #floatingContainer{position:fixed;bottom:20px;right:20px;z-index:1001;cursor:grab;touch-action:none;}
+.container.setting-open #exchangeTableWrapper{background:rgba(255,255,255,0.98);border:3px solid #1e3799;padding:10px;border-radius:12px;box-shadow:0 15px 50px rgba(0,0,0,0.4);zoom:0.8;max-height:60vh;overflow-y:auto;}
+.container.setting-open #floatingContainer:active{cursor:grabbing;}
+#previewToggleBtn{display:none;background:#1e3799;color:white;border:2px solid white;border-radius:20px;padding:6px 16px;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,0.3);font-size:12px;font-weight:bold;}
+.container.setting-open #previewToggleBtn{display:block !important;}
+.container.setting-open #mainTableWrapper{display:none;}
+table{border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;white-space:nowrap;}
+td,th{border:1px solid #e1e4e8;padding:10px;text-align:center;min-width:80px;transition:all 0.2s;}
+th{background:#1e3799;color:white;font-size:13px;}
+input[type="number"],input[type="text"],input[type="password"],select{text-align:center;font-size:14px;border:1px solid #ced4da;border-radius:4px;padding:3px;outline:none;}
+input[type="number"]:focus,select:focus{border-color:#fbc531;box-shadow:0 0 5px rgba(251,197,49,0.5);}
+input[type="number"]{width:65px;}
+.total{font-weight:bold;background:#f8f9fa;}
+.diff-ok{color:#2f3542;}
+.diff-ng{color:#eb4d4b;font-weight:bold;}
+.need{background:#ffeaa7;font-weight:bold;}
+.txt-minus{color:#eb4d4b;font-weight:bold;}
+.txt-plus{color:#0097e6;font-weight:bold;}
+.txt-ok{color:#2f3542;font-weight:bold;}
+.bg-red{background-color:#ffcccc;}
+.bg-yellow{background-color:#ffeaa7;}
+.bg-ok{background-color:#f1f2f6;}
+.modal-panel{display:none;background:#fff;border-radius:12px;border:1px solid #dcdde1;padding:25px;z-index:1000;box-shadow:0 20px 50px rgba(0,0,0,0.2);width:1100px;max-width:98%;margin-bottom:40px;}
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;border-bottom:2px solid #f1f2f6;padding-bottom:10px;}
+.help-section{background:#f8f9fa;border:1px solid #d1d8e0;border-radius:8px;padding:15px;margin-bottom:20px;display:flex;flex-direction:column;gap:20px;}
+@media(min-width:768px){.help-section{flex-direction:row;}}
+.help-col{flex:1;font-size:13px;line-height:1.6;}
+.help-col h4{margin:0 0 8px 0;color:#1e3799;border-bottom:2px solid #1e3799;display:inline-block;}
+.help-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-weight:bold;font-size:12px;width:36px;text-align:center;margin-right:5px;}
+.security-section{background:#fff3cd;border:1px solid #ffe69c;padding:15px;border-radius:8px;margin-bottom:20px;display:flex;flex-direction:column;gap:10px;font-size:14px;}
+.tour-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;pointer-events:none;}
+.tour-bubble{position:absolute;background:#1e3799;color:white;padding:15px;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:2001;width:260px;font-size:14px;pointer-events:auto;white-space:pre-wrap;line-height:1.5;}
+.tour-btn-group{display:flex;justify-content:space-between;margin-top:10px;}
+.tour-btn{background:rgba(255,255,255,0.2);border:1px solid white;color:white;padding:3px 8px;font-size:12px;border-radius:4px;cursor:pointer;}
+.highlight-target{outline:6px solid #fbc531 !important;outline-offset:2px;position:relative;z-index:2001 !important;}
+.preview-highlight{box-shadow:inset 0 0 0 3px #e15f41;background-color:rgba(251,197,49,0.2) !important;position:relative;}
+.settings-tables-container{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.settings-table-wrapper{flex:1;min-width:320px;overflow-x:auto;background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.settings-table-wrapper h4{margin-top:0;color:#1e3799;display:flex;align-items:center;gap:8px;}
+td.avail-active{background-color:#e8f4fd !important;}
+td.edge-top{border-top:2px solid black !important;}
+td.edge-bottom{border-bottom:2px solid black !important;}
+td.edge-left{border-left:2px solid black !important;}
+td.edge-right{border-right:2px solid black !important;}
+@media print{
+  body{background:white;-webkit-user-select:auto;user-select:auto;}
+  .header-bar,#datebar,#tourOverlay,#tourBubble,.modal-panel,#floatingContainer,.action-buttons,#historyPanel,#historyOverlay{display:none !important;}
+  .container{padding:0;gap:10px;}
+  .tables-wrapper{display:block;}
+  table{border:1px solid #ccc;box-shadow:none;margin-bottom:20px;width:100%;max-width:600px;margin-left:auto;margin-right:auto;}
+  td,th{padding:8px;}
+  input[type="number"]{border:none;outline:none;box-shadow:none;font-weight:bold;background:transparent;}
+  #exchangeTableWrapper{display:block;border:none;box-shadow:none;}
 }
 </style>
 </head>
-
 <body>
 
+<!-- ヘッダー -->
 <div class="header-bar">
-  <div><strong>金庫管理</strong></div>
-  <div id="user-info"></div>
+  <div><strong>金庫管理 R.W</strong></div>
 </div>
 
+<!-- 日付バー -->
+<div id="datebar">
+  <label>📅 日付：</label>
+  <input type="date" id="dateInput">
+  <button class="date-btn" id="saveServerBtn">💾 この日付で保存</button>
+  <button class="date-btn" id="historyBtn">📋 履歴</button>
+  <span id="saveMsgArea"></span>
+</div>
+
+<!-- 履歴パネル オーバーレイ -->
+<div id="historyOverlay" onclick="closeHistory()"></div>
+
+<!-- 履歴パネル -->
+<div id="historyPanel">
+  <div id="historyHeader">
+    <h3>📋 保存履歴</h3>
+    <button id="historyClose" onclick="closeHistory()">×</button>
+  </div>
+  <div id="historyList">
+    <div id="historyEmpty">履歴がありません</div>
+  </div>
+</div>
+
+<!-- ツアー -->
 <div id="tourOverlay" class="tour-overlay"></div>
 <div id="tourBubble" class="tour-bubble" style="display:none;">
   <div id="tourMessage"></div>
   <div class="tour-btn-group">
     <button class="tour-btn" onclick="prevTour()">前へ</button>
-    <button class="tour-btn" onclick="nextTour()" id="tourNextBtn">次へ</button>
+    <button class="tour-btn" onclick="nextTour()">次へ</button>
     <button class="tour-btn" onclick="closeTour()">閉じる</button>
   </div>
 </div>
 
+<!-- メインコンテナ -->
 <div id="mainContainer" class="container">
-  
+
+  <!-- 設定パネル -->
   <div id="settingPanel" class="modal-panel">
     <div class="panel-header">
       <h3>管理設定・説明</h3>
-      <span class="close-panel" onclick="closeSetting()" style="cursor:pointer; font-size:24px;">×</span>
+      <span class="close-panel" onclick="closeSetting()" style="cursor:pointer;font-size:24px;">×</span>
     </div>
-
     <div class="help-section">
       <div class="help-col">
         <h4>1. 表示設定（不足時の扱い）</h4>
-        <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
-        <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
-        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
-        <div><span class="help-tag" style="background:#bbb; color:white;">none</span> 【除外】入力欄を消し、計算からも外す</div>
+        <div><span class="help-tag bg-red">赤</span>【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
+        <div><span class="help-tag bg-yellow">黄</span>【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
+        <div><span class="help-tag" style="background:#ddd;">-</span>【隠す】差額の判定（OK/NG）を表示しない</div>
+        <div><span class="help-tag" style="background:#bbb;color:white;">none</span>【除外】入力欄を消し、計算からも外す</div>
       </div>
       <div class="help-col">
         <h4>2. 「両替使用」チェック</h4>
         <div>目標より<b>多く持っている分</b>を,右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
-        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
+        <div style="margin-top:8px;font-size:12px;background:#fff;padding:10px;border-radius:6px;border:1px solid #d1d8e0;">
           <b>💡 例：1,000円札（目標35枚）</b><br>
           手元に40枚ある場合,余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
         </div>
       </div>
     </div>
-
     <div class="security-section">
-      <div class="security-row">
-        <label style="font-weight:bold; cursor:pointer;"><input type="checkbox" id="set-use-pin"> 保存時にパスワード保護を有効にする</label>
-        <div><label>新しいパスワード: <input type="password" id="set-pin" style="width:120px;" maxlength="10" placeholder="未入力で1234"></label> (初期パスワード:1234)</div>
-      </div>
+      <label style="font-weight:bold;cursor:pointer;"><input type="checkbox" id="set-use-pin"> 保存時にパスワード保護を有効にする</label>
+      <div><label>新しいパスワード: <input type="password" id="set-pin" style="width:120px;" maxlength="10" placeholder="未入力で1234"></label> (初期パスワード:1234)</div>
     </div>
-
-    <div id="guide-step-1" style="margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 8px;">
-      <label style="font-weight: bold;">金庫全体の目標総額: </label>
-      <input type="number" id="set-vault-total" style="font-size:18px; width:140px; font-weight:bold; color:#1e3799;"> 円
+    <div id="guide-step-1" style="margin-bottom:20px;background:#eef2f7;padding:15px;border-radius:8px;">
+      <label style="font-weight:bold;">金庫全体の目標総額: </label>
+      <input type="number" id="set-vault-total" style="font-size:18px;width:140px;font-weight:bold;color:#1e3799;"> 円
     </div>
-
     <div class="settings-tables-container">
       <div class="settings-table-wrapper">
         <h4>棒金の設定</h4>
-        <table style="width: 100%;">
-          <thead>
-            <tr>
-              <th>金額</th>
-              <th id="guide-step-2">1本の枚数</th>
-              <th id="guide-step-3" style="background:#3867d6;">目標(本)</th>
-              <th id="guide-step-4" style="background:#3867d6;">表示設定</th>
-              <th id="guide-step-5" style="background:#3867d6;">両替使用</th>
-            </tr>
-          </thead>
+        <table style="width:100%;">
+          <thead><tr><th>金額</th><th id="guide-step-2">1本の枚数</th><th id="guide-step-3" style="background:#3867d6;">目標(本)</th><th id="guide-step-4" style="background:#3867d6;">表示設定</th><th id="guide-step-5" style="background:#3867d6;">両替使用</th></tr></thead>
           <tbody id="settingBarTbody"></tbody>
         </table>
       </div>
       <div class="settings-table-wrapper" id="guide-step-6">
         <h4>枚数の設定</h4>
-        <table style="width: 100%;">
-          <thead>
-            <tr>
-              <th>金額</th>
-              <th style="background:#4b7bec;">目標(枚)</th>
-              <th style="background:#4b7bec;">表示設定</th>
-              <th style="background:#4b7bec;">両替使用</th>
-            </tr>
-          </thead>
+        <table style="width:100%;">
+          <thead><tr><th>金額</th><th style="background:#4b7bec;">目標(枚)</th><th style="background:#4b7bec;">表示設定</th><th style="background:#4b7bec;">両替使用</th></tr></thead>
           <tbody id="settingCoinTbody"></tbody>
         </table>
       </div>
     </div>
-
-    <div style="text-align: right; margin-top: 25px;">
-      <button id="saveBtn" style="padding: 12px 40px; background: #2ed573; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:6px;">設定をブラウザに保存</button>
+    <div style="text-align:right;margin-top:25px;">
+      <button id="saveBtn" style="padding:12px 40px;background:#2ed573;color:white;font-size:16px;cursor:pointer;font-weight:bold;border:none;border-radius:6px;">設定をブラウザに保存</button>
     </div>
   </div>
 
+  <!-- メインテーブル -->
   <div class="tables-wrapper" id="tablesWrapper">
     <div id="mainTableWrapper">
       <table id="mainTable">
@@ -211,15 +211,12 @@ td.edge-right { border-right: 2px solid black !important; }
         <tr class="total"><td>合計</td><td colspan="2"></td><td id="total">0</td></tr>
         <tr><td>差額</td><td colspan="2"></td><td id="diff" class="diff-ok">0</td></tr>
       </table>
-      
-      <!-- ⬇︎ ボタンエリアに追加 ⬇︎ -->
-      <div class="action-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;">
-        <button id="printBtn" style="padding:10px 15px; background:#48dbfb; color:#222; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">印刷</button>
-        <button id="csvBtn" style="padding:10px 15px; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">CSV出力</button>
-        <button id="settingBtn" style="padding:10px 15px; background:#2f3542; color:white; cursor:pointer; border:none; border-radius:6px;">設定・説明</button>
-        <button id="resetBtn" style="padding:10px 15px; background:#ff7675; color:white; cursor:pointer; border:none; border-radius:6px;">クリア</button>
+      <div class="action-buttons" style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;flex-wrap:wrap;">
+        <button id="printBtn" style="padding:10px 15px;background:#48dbfb;color:#222;font-weight:bold;cursor:pointer;border:none;border-radius:6px;">印刷</button>
+        <button id="csvBtn" style="padding:10px 15px;background:#1dd1a1;color:white;font-weight:bold;cursor:pointer;border:none;border-radius:6px;">CSV出力</button>
+        <button id="settingBtn" style="padding:10px 15px;background:#2f3542;color:white;cursor:pointer;border:none;border-radius:6px;">設定・説明</button>
+        <button id="resetBtn" style="padding:10px 15px;background:#ff7675;color:white;cursor:pointer;border:none;border-radius:6px;">クリア</button>
       </div>
-
     </div>
 
     <div id="floatingContainer">
@@ -233,11 +230,124 @@ td.edge-right { border-right: 2px solid black !important; }
       </div>
       <button id="previewToggleBtn">非表示</button>
     </div>
-
   </div>
 </div>
 
 <script>
+/* =============================================
+   日付バー初期化（今日の日付をセット）
+   ============================================= */
+const dateInput = document.getElementById('dateInput');
+dateInput.value = new Date().toISOString().slice(0, 10);
+
+/* =============================================
+   サーバー保存
+   ============================================= */
+async function saveToServer() {
+  const date = dateInput.value;
+  if (!date) { alert('日付を選択してください'); return; }
+  const msg = document.getElementById('saveMsgArea');
+  msg.textContent = '保存中...';
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, inputs: currentInputsSnapshot(), config })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    msg.textContent = `✅ ${date} に保存しました`;
+    setTimeout(() => msg.textContent = '', 3000);
+  } catch (e) {
+    msg.textContent = '❌ 保存に失敗しました: ' + e.message;
+  }
+}
+
+/* =============================================
+   サーバーから日付指定でロード
+   ============================================= */
+async function loadFromServer(date) {
+  const msg = document.getElementById('saveMsgArea');
+  msg.textContent = '読み込み中...';
+  try {
+    const res = await fetch(`/api/load/${date}`);
+    const data = await res.json();
+    if (!data) { msg.textContent = `${date} のデータはありません`; setTimeout(() => msg.textContent = '', 3000); return; }
+    // 入力値を復元
+    const inputs = data.inputs;
+    prices.forEach(p => {
+      const bIn = document.querySelector(`.in-bar[data-price="${p}"]`);
+      const cIn = document.querySelector(`.in-coin[data-price="${p}"]`);
+      if (bIn) bIn.value = inputs[p]?.b || '';
+      if (cIn) cIn.value = inputs[p]?.c || '';
+    });
+    calculate();
+    dateInput.value = date;
+    msg.textContent = `📂 ${date} のデータを読み込みました`;
+    setTimeout(() => msg.textContent = '', 3000);
+    closeHistory();
+  } catch (e) {
+    msg.textContent = '❌ 読み込みに失敗しました: ' + e.message;
+  }
+}
+
+/* =============================================
+   履歴パネル
+   ============================================= */
+async function openHistory() {
+  document.getElementById('historyPanel').classList.add('open');
+  document.getElementById('historyOverlay').classList.add('open');
+  const list = document.getElementById('historyList');
+  list.innerHTML = '<div style="text-align:center;color:#b2bec3;padding:20px;">読み込み中...</div>';
+  try {
+    const res = await fetch('/api/history');
+    const rows = await res.json();
+    if (!rows.length) { list.innerHTML = '<div id="historyEmpty">履歴がありません</div>'; return; }
+    list.innerHTML = rows.map(r => {
+      const d = r.record_date.slice(0, 10);
+      const savedAt = new Date(r.saved_at).toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      return `<div class="history-item ${d === dateInput.value ? 'active' : ''}" onclick="loadFromServer('${d}')">
+        <div>
+          <div class="history-date">${d}</div>
+          <div class="history-time">保存: ${savedAt}</div>
+        </div>
+        <button class="history-del" onclick="event.stopPropagation(); deleteRecord('${d}')" title="削除">🗑</button>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="color:#eb4d4b;padding:20px;">読み込みに失敗しました</div>';
+  }
+}
+
+function closeHistory() {
+  document.getElementById('historyPanel').classList.remove('open');
+  document.getElementById('historyOverlay').classList.remove('open');
+}
+
+async function deleteRecord(date) {
+  if (!confirm(`${date} のデータを削除しますか？`)) return;
+  await fetch(`/api/delete/${date}`, { method: 'DELETE' });
+  openHistory(); // 再読み込み
+}
+
+document.getElementById('saveServerBtn').addEventListener('click', saveToServer);
+document.getElementById('historyBtn').addEventListener('click', openHistory);
+
+/* =============================================
+   現在の入力値スナップショット
+   ============================================= */
+function currentInputsSnapshot() {
+  const snap = {};
+  prices.forEach(p => {
+    const bIn = document.querySelector(`.in-bar[data-price="${p}"]`);
+    const cIn = document.querySelector(`.in-coin[data-price="${p}"]`);
+    snap[p] = { b: bIn?.value || '', c: cIn?.value || '' };
+  });
+  return snap;
+}
+
+/* =============================================
+   既存アプリ ロジック
+   ============================================= */
 const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: true, pin: "1234",
@@ -261,304 +371,162 @@ function init() {
   const exchangeBody = document.getElementById("exchangeBody");
   const settingBarTbody = document.getElementById("settingBarTbody");
   const settingCoinTbody = document.getElementById("settingCoinTbody");
-  inputBody.innerHTML = ""; exchangeBody.innerHTML = ""; settingBarTbody.innerHTML = ""; settingCoinTbody.innerHTML = "";
+  inputBody.innerHTML=""; exchangeBody.innerHTML=""; settingBarTbody.innerHTML=""; settingCoinTbody.innerHTML="";
   document.getElementById("set-vault-total").value = config.vaultTotal;
   document.getElementById("set-use-pin").checked = config.usePin;
   document.getElementById("set-pin").value = config.pin;
-
   prices.forEach(p => {
     const s = config.denoms[p];
     const valB = savedInputs[p]?.b || "";
     const valC = savedInputs[p]?.c || "";
     const getCell = (mode, type, val) => {
-      if (mode === "none") return "";
-      if (mode === "hidden") return "-";
+      if (mode==="none") return "";
+      if (mode==="hidden") return "-";
       return `<input type="number" class="in-${type}" data-price="${p}" value="${val}">`;
     };
-    inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode, "bar", valB)}</td><td>${getCell(s.cMode, "coin", valC)}</td><td id="sum-${p}">0</td></tr>`;
+    inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode,"bar",valB)}</td><td>${getCell(s.cMode,"coin",valC)}</td><td id="sum-${p}">0</td></tr>`;
     exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
-    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
-    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
+    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold;background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
+    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold;background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
   });
-
   document.querySelectorAll(".set-sync").forEach(el => {
     el.addEventListener("input", (e) => {
-      const p = e.target.dataset.price; const key = e.target.dataset.key;
-      config.denoms[p][key] = e.target.type === "checkbox" ? e.target.checked : (e.target.type === "number" ? Number(e.target.value) : e.target.value);
+      const p=e.target.dataset.price; const key=e.target.dataset.key;
+      config.denoms[p][key]=e.target.type==="checkbox"?e.target.checked:(e.target.type==="number"?Number(e.target.value):e.target.value);
       calculate();
     });
     el.addEventListener("focus", (e) => highlightPreview(e.target.dataset.price, e.target.dataset.key));
     el.addEventListener("blur", clearPreviewHighlight);
   });
-  
   const vaultTotalIn = document.getElementById("set-vault-total");
-  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal = Number(e.target.value); calculate(); });
+  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal=Number(e.target.value); calculate(); });
   vaultTotalIn.addEventListener("focus", () => { document.getElementById("diff").classList.add("preview-highlight"); document.getElementById("needMoney").classList.add("preview-highlight"); });
   vaultTotalIn.addEventListener("blur", clearPreviewHighlight);
+  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode','numeric'));
   calculate();
 }
 
 function highlightPreview(price, key) {
   clearPreviewHighlight();
-  const mainRow = document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
-  const exRow = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-  if(!mainRow || !exRow) return;
-  if (['perBar', 'tBar', 'bMode', 'isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
-  else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
+  const mainRow=document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
+  const exRow=document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
+  if(!mainRow||!exRow) return;
+  if(['perBar','tBar','bMode','isAvailB'].includes(key)){if(mainRow.children[1])mainRow.children[1].classList.add('preview-highlight');if(exRow.children[1])exRow.children[1].classList.add('preview-highlight');}
+  else{if(mainRow.children[2])mainRow.children[2].classList.add('preview-highlight');if(exRow.children[2])exRow.children[2].classList.add('preview-highlight');}
 }
-function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight')); }
+function clearPreviewHighlight(){document.querySelectorAll('.preview-highlight').forEach(el=>el.classList.remove('preview-highlight'));}
 
 function calculate() {
-  let currentTotal = 0, needMoney = 0, availableMoney = 0;
-  let currentInputs = {};
-  
-  prices.forEach((price, i) => { 
-    const s = config.denoms[price];
-    const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
-    const cIn = document.querySelector(`.in-coin[data-price="${price}"]`);
-    
-    const barVal = Number(bIn?.value || 0);
-    const coinVal = Number(cIn?.value || 0);
-    currentInputs[price] = { b: bIn?.value || "", c: cIn?.value || "" };
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
-    
-    let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
-    currentTotal += rowAmount;
-    document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
-    
-    if (s.bMode === "hidden") bCell.innerText = "-";
-    else if (s.bMode !== "none") {
-      const dBar = barVal - s.tBar;
-      bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
-      let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-      bCell.className = bClass + (s.isAvailB ? ' avail-active' : '');
-      if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
-      if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
-    } else bCell.innerText = "-";
-    
-    if (s.cMode === "hidden") cCell.innerText = "-";
-    else if (s.cMode !== "none") {
-      const dCoin = coinVal - s.tCoin;
-      cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
-      let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-      cCell.className = cClass + (s.isAvailC ? ' avail-active' : '');
-      if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
-      if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
-    } else cCell.innerText = "-";
-  });
-
-  const activeGrid = [];
+  let currentTotal=0,needMoney=0,availableMoney=0,currentInputs={};
   prices.forEach((price) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    activeGrid.push([ rowEx.children[1].classList.contains('avail-active'), rowEx.children[2].classList.contains('avail-active') ]);
+    const s=config.denoms[price];
+    const bIn=document.querySelector(`.in-bar[data-price="${price}"]`);
+    const cIn=document.querySelector(`.in-coin[data-price="${price}"]`);
+    const barVal=Number(bIn?.value||0); const coinVal=Number(cIn?.value||0);
+    currentInputs[price]={b:bIn?.value||"",c:cIn?.value||""};
+    const rowEx=document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
+    const bCell=rowEx.children[1]; const cCell=rowEx.children[2];
+    let rowAmount=(s.bMode!=="none"||s.cMode!=="none")?((barVal*s.perBar)+coinVal)*price:0;
+    currentTotal+=rowAmount;
+    document.getElementById(`sum-${price}`).innerText=rowAmount.toLocaleString();
+    if(s.bMode==="hidden")bCell.innerText="-";
+    else if(s.bMode!=="none"){const dBar=barVal-s.tBar;bCell.innerText=dBar>0?"+"+dBar:(dBar<0?dBar:"OK");let bClass=dBar>0?"txt-plus":(dBar<0?`txt-minus ${s.bMode}`:"txt-ok bg-ok");bCell.className=bClass+(s.isAvailB?' avail-active':'');if(dBar>0&&s.isAvailB)availableMoney+=dBar*s.perBar*price;if(dBar<0&&s.bMode==="bg-red")needMoney+=Math.abs(dBar)*s.perBar*price;}
+    else bCell.innerText="-";
+    if(s.cMode==="hidden")cCell.innerText="-";
+    else if(s.cMode!=="none"){const dCoin=coinVal-s.tCoin;cCell.innerText=dCoin>0?"+"+dCoin:(dCoin<0?dCoin:"OK");let cClass=dCoin>0?"txt-plus":(dCoin<0?`txt-minus ${s.cMode}`:"txt-ok bg-ok");cCell.className=cClass+(s.isAvailC?' avail-active':'');if(dCoin>0&&s.isAvailC)availableMoney+=dCoin*price;if(dCoin<0&&s.cMode==="bg-red")needMoney+=Math.abs(dCoin)*price;}
+    else cCell.innerText="-";
   });
-
-  prices.forEach((price, rowIndex) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    const cells = [rowEx.children[1], rowEx.children[2]];
-    cells.forEach((cell, colIndex) => {
-      cell.classList.remove('edge-top', 'edge-bottom', 'edge-left', 'edge-right');
-      if (activeGrid[rowIndex][colIndex]) {
-        const hasTop = rowIndex > 0 && activeGrid[rowIndex - 1][colIndex];
-        const hasBottom = rowIndex < prices.length - 1 && activeGrid[rowIndex + 1][colIndex];
-        const hasLeft = colIndex > 0 && activeGrid[rowIndex][colIndex - 1];
-        const hasRight = colIndex < 1 && activeGrid[rowIndex][colIndex + 1];
-        if (!hasTop) cell.classList.add('edge-top');
-        if (!hasBottom) cell.classList.add('edge-bottom');
-        if (!hasLeft) cell.classList.add('edge-left');
-        if (!hasRight) cell.classList.add('edge-right');
-      }
-    });
-  });
-
-  document.getElementById("total").innerText = currentTotal.toLocaleString();
-  const diffVal = currentTotal - config.vaultTotal;
-  const dCell = document.getElementById("diff");
-  dCell.innerText = diffVal.toLocaleString();
-  dCell.className = (diffVal === 0) ? "diff-ok" : "diff-ng";
-  document.getElementById("needMoney").innerText = needMoney.toLocaleString() + "円";
-  document.getElementById("availableMoney").innerText = availableMoney.toLocaleString() + "円";
-  localStorage.setItem('vaultInputs', JSON.stringify(currentInputs));
+  const activeGrid=[];
+  prices.forEach((price)=>{const rowEx=document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);activeGrid.push([rowEx.children[1].classList.contains('avail-active'),rowEx.children[2].classList.contains('avail-active')]);});
+  prices.forEach((price,rowIndex)=>{const rowEx=document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);const cells=[rowEx.children[1],rowEx.children[2]];cells.forEach((cell,colIndex)=>{cell.classList.remove('edge-top','edge-bottom','edge-left','edge-right');if(activeGrid[rowIndex][colIndex]){const hasTop=rowIndex>0&&activeGrid[rowIndex-1][colIndex];const hasBottom=rowIndex<prices.length-1&&activeGrid[rowIndex+1][colIndex];const hasLeft=colIndex>0&&activeGrid[rowIndex][colIndex-1];const hasRight=colIndex<1&&activeGrid[rowIndex][colIndex+1];if(!hasTop)cell.classList.add('edge-top');if(!hasBottom)cell.classList.add('edge-bottom');if(!hasLeft)cell.classList.add('edge-left');if(!hasRight)cell.classList.add('edge-right');}});});
+  document.getElementById("total").innerText=currentTotal.toLocaleString();
+  const diffVal=currentTotal-config.vaultTotal;
+  const dCell=document.getElementById("diff");
+  dCell.innerText=diffVal.toLocaleString();
+  dCell.className=(diffVal===0)?"diff-ok":"diff-ng";
+  document.getElementById("needMoney").innerText=needMoney.toLocaleString()+"円";
+  document.getElementById("availableMoney").innerText=availableMoney.toLocaleString()+"円";
+  localStorage.setItem('vaultInputs',JSON.stringify(currentInputs));
 }
 
-let tourStep = 0;
-const tourSteps = [
-  { id: "guide-step-1", msg: "1. 目標総額\n金庫にあるべき最終的な合計金額を入力します。" },
-  { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
-  { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
-  { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
-  { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると,余剰分を「両替に使えるお金」として集計します。" },
-  { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
-  { id: "saveBtn",      msg: "7. 保存\n最後にここを押してブラウザへ保存してください。" }
+/* ツアー */
+let tourStep=0;
+const tourSteps=[
+  {id:"guide-step-1",msg:"1. 目標総額\n金庫にあるべき最終的な合計金額を入力します。"},
+  {id:"guide-step-2",msg:"2. 1本の枚数\n棒金1本あたりの枚数です。"},
+  {id:"guide-step-3",msg:"3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。"},
+  {id:"guide-step-4",msg:"4. 表示設定\n不足時の色分けや集計対象を設定します。"},
+  {id:"guide-step-5",msg:"5. 両替使用\nチェックを入れると,余剰分を「両替に使えるお金」として集計します。"},
+  {id:"guide-step-6",msg:"6. バラ(枚数)の設定\nバラについても同様に設定します。"},
+  {id:"saveBtn",msg:"7. 保存\n最後にここを押してブラウザへ保存してください。"}
 ];
-function startTour() { tourStep = 0; document.getElementById("tourOverlay").style.display = "block"; showStep(); }
-function showStep() {
-  document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target"));
-  const step = tourSteps[tourStep]; const target = document.getElementById(step.id); const bubble = document.getElementById("tourBubble");
+function startTour(){tourStep=0;document.getElementById("tourOverlay").style.display="block";showStep();}
+function showStep(){
+  document.querySelectorAll(".highlight-target").forEach(el=>el.classList.remove("highlight-target"));
+  const step=tourSteps[tourStep];const target=document.getElementById(step.id);const bubble=document.getElementById("tourBubble");
   target.classList.add("highlight-target");
-  document.getElementById("tourMessage").innerText = `${tourStep + 1} / ${tourSteps.length}\n${step.msg}`;
-  bubble.style.display = "block"; 
-  const rect = target.getBoundingClientRect();
-  const bubbleRect = bubble.getBoundingClientRect();
-  let topPos = rect.bottom + 15;
-  if (topPos + bubbleRect.height > window.innerHeight) topPos = rect.top - bubbleRect.height - 15;
-  let leftPos = rect.left;
-  if (leftPos + bubbleRect.width > window.innerWidth) leftPos = window.innerWidth - bubbleRect.width - 20;
-  bubble.style.top = (window.scrollY + topPos) + "px"; bubble.style.left = Math.max(10, leftPos) + "px";
+  document.getElementById("tourMessage").innerText=`${tourStep+1} / ${tourSteps.length}\n${step.msg}`;
+  bubble.style.display="block";
+  const rect=target.getBoundingClientRect();const bubbleRect=bubble.getBoundingClientRect();
+  let topPos=rect.bottom+15;if(topPos+bubbleRect.height>window.innerHeight)topPos=rect.top-bubbleRect.height-15;
+  let leftPos=rect.left;if(leftPos+bubbleRect.width>window.innerWidth)leftPos=window.innerWidth-bubbleRect.width-20;
+  bubble.style.top=(window.scrollY+topPos)+"px";bubble.style.left=Math.max(10,leftPos)+"px";
 }
-function nextTour() { tourStep < tourSteps.length - 1 ? (tourStep++, showStep()) : closeTour(); }
-function prevTour() { if (tourStep > 0) { tourStep--; showStep(); } }
-function closeTour() { document.getElementById("tourOverlay").style.display = "none"; document.getElementById("tourBubble").style.display = "none"; document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target")); }
+function nextTour(){tourStep<tourSteps.length-1?(tourStep++,showStep()):closeTour();}
+function prevTour(){if(tourStep>0){tourStep--;showStep();}}
+function closeTour(){document.getElementById("tourOverlay").style.display="none";document.getElementById("tourBubble").style.display="none";document.querySelectorAll(".highlight-target").forEach(el=>el.classList.remove("highlight-target"));}
 
-document.getElementById("settingBtn").addEventListener("click", () => {
-  document.getElementById("mainContainer").classList.add("setting-open");
-  document.getElementById("settingPanel").style.display = "block";
-  setTimeout(startTour, 300);
-});
-function closeSetting() {
-  const container = document.getElementById("mainContainer");
-  const el = document.getElementById("floatingContainer");
-  container.classList.remove("setting-open");
-  document.getElementById("settingPanel").style.display = "none";
-  el.style.position = ""; el.style.top = ""; el.style.left = ""; el.style.bottom = ""; el.style.right = "";
-  clearPreviewHighlight(); closeTour();
-}
-function togglePreview() {
-  const wrapper = document.getElementById("exchangeTableWrapper");
-  const btn = document.getElementById("previewToggleBtn");
-  const isHidden = wrapper.style.display === "none";
-  wrapper.style.display = isHidden ? "block" : "none";
-  btn.innerText = isHidden ? "非表示" : "表示";
-}
-document.getElementById("saveBtn").addEventListener("click", () => {
-  if (config.usePin && prompt("パスワードを入力してください") !== config.pin) return alert("認証失敗");
-  config.usePin = document.getElementById("set-use-pin").checked;
-  config.pin = document.getElementById("set-pin").value || "1234";
-  localStorage.setItem('vaultConfig', JSON.stringify(config));
-  alert("保存しました"); closeSetting(); init();
-});
-document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("数値をすべてクリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
-document.getElementById("inputBody").addEventListener("input", calculate);
+document.getElementById("settingBtn").addEventListener("click",()=>{document.getElementById("mainContainer").classList.add("setting-open");document.getElementById("settingPanel").style.display="block";setTimeout(startTour,300);});
+function closeSetting(){const container=document.getElementById("mainContainer");const el=document.getElementById("floatingContainer");container.classList.remove("setting-open");document.getElementById("settingPanel").style.display="none";el.style.position="";el.style.top="";el.style.left="";el.style.bottom="";el.style.right="";clearPreviewHighlight();closeTour();}
+function togglePreview(){const wrapper=document.getElementById("exchangeTableWrapper");const btn=document.getElementById("previewToggleBtn");const isHidden=wrapper.style.display==="none";wrapper.style.display=isHidden?"block":"none";btn.innerText=isHidden?"非表示":"表示";}
 
-/* ⬇︎ 追加機能：印刷 ⬇︎ */
-document.getElementById("printBtn").addEventListener("click", () => {
-  window.print();
+document.getElementById("saveBtn").addEventListener("click",()=>{
+  if(config.usePin&&prompt("パスワードを入力してください")!==config.pin)return alert("認証失敗");
+  config.usePin=document.getElementById("set-use-pin").checked;
+  config.pin=document.getElementById("set-pin").value||"1234";
+  localStorage.setItem('vaultConfig',JSON.stringify(config));
+  alert("保存しました");closeSetting();init();
 });
-
-/* ⬇︎ 追加機能：CSV出力 ⬇︎ */
-document.getElementById("csvBtn").addEventListener("click", () => {
-  // UTF-8のBOM（これがないとExcelで開いた時に文字化けします）
-  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-  
-  // ヘッダー行作成
-  csvContent += "金額,棒金(入力),枚数(入力),合計,棒金差,枚数差\n";
-  
-  // 各行のデータを取得
-  prices.forEach(p => {
-    const barIn = document.querySelector(`.in-bar[data-price="${p}"]`);
-    const coinIn = document.querySelector(`.in-coin[data-price="${p}"]`);
-    const barVal = barIn ? barIn.value : "";
-    const coinVal = coinIn ? coinIn.value : "";
-    const sumVal = document.getElementById(`sum-${p}`).innerText.replace(/,/g, "");
-    
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${p}"]`);
-    const dBar = rowEx.children[1].innerText;
-    const dCoin = rowEx.children[2].innerText;
-    
-    csvContent += `${p},${barVal},${coinVal},${sumVal},${dBar},${dCoin}\n`;
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("数値をすべてクリアしますか？")){document.querySelectorAll("#mainTable input").forEach(i=>i.value="");calculate();}});
+document.getElementById("inputBody").addEventListener("input",calculate);
+document.getElementById("printBtn").addEventListener("click",()=>{window.print();});
+document.getElementById("csvBtn").addEventListener("click",()=>{
+  let csvContent="data:text/csv;charset=utf-8,\uFEFF";
+  csvContent+="金額,棒金(入力),枚数(入力),合計,棒金差,枚数差\n";
+  prices.forEach(p=>{
+    const barIn=document.querySelector(`.in-bar[data-price="${p}"]`);
+    const coinIn=document.querySelector(`.in-coin[data-price="${p}"]`);
+    const sumVal=document.getElementById(`sum-${p}`).innerText.replace(/,/g,"");
+    const rowEx=document.querySelector(`#exchangeBody tr[data-row-price="${p}"]`);
+    csvContent+=`${p},${barIn?barIn.value:""},${coinIn?coinIn.value:""},${sumVal},${rowEx.children[1].innerText},${rowEx.children[2].innerText}\n`;
   });
-  
-  // 合計などのまとめ部分
-  const total = document.getElementById("total").innerText.replace(/,/g, "");
-  const diff = document.getElementById("diff").innerText.replace(/,/g, "");
-  const available = document.getElementById("availableMoney").innerText.replace(/,/g, "").replace("円", "");
-  const need = document.getElementById("needMoney").innerText.replace(/,/g, "").replace("円", "");
-  
-  csvContent += `\n`;
-  csvContent += `項目,,,金額\n`;
-  csvContent += `全体合計,,,${total}\n`;
-  csvContent += `差額,,,${diff}\n`;
-  csvContent += `使用可能金額,,,${available}\n`;
-  csvContent += `補充が必要な金額,,,${need}\n`;
-
-  // ダウンロード処理
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0,10);
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `金庫管理データ_${dateStr}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const total=document.getElementById("total").innerText.replace(/,/g,"");
+  const diff=document.getElementById("diff").innerText.replace(/,/g,"");
+  const available=document.getElementById("availableMoney").innerText.replace(/,/g,"").replace("円","");
+  const need=document.getElementById("needMoney").innerText.replace(/,/g,"").replace("円","");
+  csvContent+=`\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n使用可能金額,,,${available}\n補充が必要な金額,,,${need}\n`;
+  const link=document.createElement("a");
+  const dateStr=dateInput.value||new Date().toISOString().slice(0,10);
+  link.setAttribute("href",encodeURI(csvContent));
+  link.setAttribute("download",`金庫管理データ_${dateStr}.csv`);
+  document.body.appendChild(link);link.click();document.body.removeChild(link);
 });
 
-(function() {
-  const el = document.getElementById("floatingContainer");
-  const toggleBtn = document.getElementById("previewToggleBtn");
-  let isDragging = false, offsetX, offsetY;
-  let startX, startY, hasMoved = false;
-
-  const onStart = (e) => {
-    if (!document.getElementById("mainContainer").classList.contains("setting-open")) return;
-    if (e.target.closest('input, select, .close-panel')) return; 
-    
-    isDragging = true;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    startX = clientX; startY = clientY; hasMoved = false;
-    
-    const rect = el.getBoundingClientRect();
-    offsetX = clientX - rect.left; offsetY = clientY - rect.top;
-    el.style.transition = "none"; el.style.bottom = "auto"; el.style.right = "auto";
-  };
-  
-  const onMove = (e) => {
-    if (!isDragging) return;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) hasMoved = true;
-    el.style.left = (clientX - offsetX) + "px"; el.style.top = (clientY - offsetY) + "px";
-    if(e.cancelable) e.preventDefault();
-  };
-  
-  const onEnd = () => { isDragging = false; el.style.transition = ""; };
-
-  el.addEventListener("mousedown", onStart); el.addEventListener("touchstart", onStart, {passive: false});
-  window.addEventListener("mousemove", onMove); window.addEventListener("touchmove", onMove, {passive: false});
-  window.addEventListener("mouseup", onEnd); window.addEventListener("touchend", onEnd);
-
-  toggleBtn.addEventListener("click", (e) => {
-    if (hasMoved) { e.preventDefault(); e.stopPropagation(); return; }
-    togglePreview();
-  });
+/* ドラッグ */
+(function(){
+  const el=document.getElementById("floatingContainer");const toggleBtn=document.getElementById("previewToggleBtn");
+  let isDragging=false,offsetX,offsetY,startX,startY,hasMoved=false;
+  const onStart=(e)=>{if(!document.getElementById("mainContainer").classList.contains("setting-open"))return;if(e.target.closest('input,select,.close-panel'))return;isDragging=true;const clientX=e.clientX||(e.touches&&e.touches[0].clientX);const clientY=e.clientY||(e.touches&&e.touches[0].clientY);startX=clientX;startY=clientY;hasMoved=false;const rect=el.getBoundingClientRect();offsetX=clientX-rect.left;offsetY=clientY-rect.top;el.style.transition="none";el.style.bottom="auto";el.style.right="auto";};
+  const onMove=(e)=>{if(!isDragging)return;const clientX=e.clientX||(e.touches&&e.touches[0].clientX);const clientY=e.clientY||(e.touches&&e.touches[0].clientY);if(Math.abs(clientX-startX)>5||Math.abs(clientY-startY)>5)hasMoved=true;el.style.left=(clientX-offsetX)+"px";el.style.top=(clientY-offsetY)+"px";if(e.cancelable)e.preventDefault();};
+  const onEnd=()=>{isDragging=false;el.style.transition="";};
+  el.addEventListener("mousedown",onStart);el.addEventListener("touchstart",onStart,{passive:false});
+  window.addEventListener("mousemove",onMove);window.addEventListener("touchmove",onMove,{passive:false});
+  window.addEventListener("mouseup",onEnd);window.addEventListener("touchend",onEnd);
+  toggleBtn.addEventListener("click",(e)=>{if(hasMoved){e.preventDefault();e.stopPropagation();return;}togglePreview();});
 })();
 
-document.addEventListener('focusin', function(e) {
-  if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
-    setTimeout(() => { e.target.select(); }, 10);
-  }
-});
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-    e.preventDefault(); 
-    const barInputs = Array.from(document.querySelectorAll('.in-bar'));
-    const coinInputs = Array.from(document.querySelectorAll('.in-coin'));
-    const navRoute = barInputs.concat(coinInputs);
-    const currentIndex = navRoute.indexOf(e.target);
-    if (currentIndex > -1) {
-      const nextIndex = (currentIndex + 1) % navRoute.length;
-      navRoute[nextIndex].focus();
-    }
-  }
-});
-  
-const originalInit = init;
-init = function() {
-  originalInit();
-  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode', 'numeric'));
-};
+document.addEventListener('focusin',function(e){if(e.target.tagName==='INPUT'&&e.target.type==='number'){setTimeout(()=>{e.target.select();},10);}});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();const barInputs=Array.from(document.querySelectorAll('.in-bar'));const coinInputs=Array.from(document.querySelectorAll('.in-coin'));const navRoute=barInputs.concat(coinInputs);const currentIndex=navRoute.indexOf(e.target);if(currentIndex>-1){navRoute[(currentIndex+1)%navRoute.length].focus();}}});
 
 init();
 </script>
