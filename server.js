@@ -99,7 +99,7 @@ app.post('/api/subscription/create-checkout', authenticate, async (req, res) => 
       payment_method_types: ['card'],
       customer_email: req.email,
       client_reference_id: req.uid,
-      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      line_items: [{ price: process.env.STRIPE_PRICE_ID.trim(), quantity: 1 }],
       success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${domainURL}/`,
     });
