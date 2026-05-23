@@ -8,7 +8,6 @@
 <meta property="og:type" content="website">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<!-- ★ Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
@@ -53,6 +52,25 @@
 .btn-secondary:hover { background: #eef2f7; }
 #loginError { color: #eb4d4b; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; }
 .login-divider { text-align: center; color: #aaa; margin: 12px 0; font-size: 12px; }
+
+/* ════════════════════════════════════════
+   ★ 追加: サブスクリプション画面
+════════════════════════════════════════ */
+#subscriptionScreen {
+  display: none; align-items: center; justify-content: center;
+  min-height: 100vh; background: #f0f2f5; flex-direction: column;
+}
+.sub-card {
+  background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  padding: 40px 36px; width: 400px; max-width: 95vw; text-align: center;
+}
+.sub-card h2 { color: #1e3799; margin-top: 0; }
+.sub-btn {
+  background: #2ed573; color: white; border: none; padding: 15px 30px;
+  font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer;
+  margin-top: 20px; width: 100%; transition: background 0.2s;
+}
+.sub-btn:hover { background: #26b360; }
 
 /* ════════════════════════════════════════
    メインアプリ（既存スタイルそのまま）
@@ -181,16 +199,12 @@ td.edge-right { border-right: 2px solid black !important; }
 </head>
 <body>
 
-<!-- ════════════════════════════════════════
-     ログイン画面
-════════════════════════════════════════ -->
 <div id="loginScreen">
   <div class="login-card">
     <h2>🏦 金庫管理</h2>
     <p>アカウントにログインしてください</p>
     <div id="loginError"></div>
 
-    <!-- ログインフォーム -->
     <div id="loginForm">
       <label>メールアドレス</label>
       <input type="email" id="loginEmail" placeholder="example@email.com" autocomplete="email">
@@ -201,7 +215,6 @@ td.edge-right { border-right: 2px solid black !important; }
       <button class="btn-secondary" onclick="showRegister()">新規アカウント登録</button>
     </div>
 
-    <!-- 新規登録フォーム -->
     <div id="registerForm" style="display:none;">
       <label>メールアドレス</label>
       <input type="email" id="regEmail" placeholder="example@email.com" autocomplete="email">
@@ -216,16 +229,23 @@ td.edge-right { border-right: 2px solid black !important; }
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     メインアプリ画面
-════════════════════════════════════════ -->
+<div id="subscriptionScreen">
+  <div class="sub-card">
+    <h2>🔒 プランの登録が必要です</h2>
+    <p>金庫管理システムをご利用いただくには、<br>サブスクリプションの登録が必要です。</p>
+    <button class="sub-btn" id="subscribeBtn" onclick="startSubscription()">プランに登録する</button>
+    <div style="margin-top: 20px;">
+      <button class="btn-secondary" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+</div>
+
 <div id="appScreen">
   <div class="header-bar">
     <div><strong>金庫管理</strong></div>
     <div class="header-right">
       <span class="sync-status" id="syncStatus"></span>
       <span class="header-user" id="headerUser"></span>
-      <!-- ★ 設定ボタンをここに移動しました -->
       <button id="settingBtn" class="logout-btn">設定・説明</button>
       <button class="logout-btn" onclick="doLogout()">ログアウト</button>
     </div>
@@ -322,7 +342,6 @@ td.edge-right { border-right: 2px solid black !important; }
           <tr><td>差額</td><td colspan="2"></td><td id="diff" class="diff-ok">0</td></tr>
         </table>
 
-        <!-- ★ アクションボタン群を変更しました -->
         <div class="action-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;">
           <div style="position:relative; display:inline-block;">
             <button id="othersBtn" style="padding:10px 15px; background:#747d8c; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;" onclick="const m = document.getElementById('othersMenu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex';">その他 ▼</button>
@@ -352,7 +371,6 @@ td.edge-right { border-right: 2px solid black !important; }
   </div>
 </div>
 
-<!-- 履歴パネル -->
 <div id="historyOverlay">
   <div id="historyPanel">
     <h3>📋 過去の履歴</h3>
@@ -397,9 +415,9 @@ td.edge-right { border-right: 2px solid black !important; }
   </div>
 </div>
 
-<script> <!-- ★ここに追加！ -->
+<script>
 // ════════════════════════════════════════
-// ★ ここにFirebaseの設定を入力してください
+// Firebaseの設定
 // ════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyDyGmC0Bsx8m1WhMNKBwYwJEzJD-ZGOFf8",
@@ -461,18 +479,41 @@ function loginErrorMsg(code) {
 }
 
 // ════════════════════════════════════════
-// 認証状態の監視 → ログイン/ログアウトで画面切替
+// ★ 変更: 認証状態の監視 → サブスクリプション状態のチェック
 // ════════════════════════════════════════
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display   = 'block';
-    document.getElementById('headerUser').textContent    = user.email;
-    await loadConfigFromServer();
-    init();
+    document.getElementById('headerUser').textContent = user.email;
+    
+    // サブスク状態の確認
+    try {
+      const headers = await getAuthHeader();
+      const res = await fetch('/api/subscription/status', { headers });
+      const data = await res.json();
+
+      if (data.status === 'active') {
+        // 課金済み：アプリ画面を表示
+        document.getElementById('subscriptionScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        await loadConfigFromServer();
+        init();
+      } else {
+        // 未課金：サブスク案内画面を表示
+        document.getElementById('subscriptionScreen').style.display = 'flex';
+        document.getElementById('appScreen').style.display = 'none';
+      }
+    } catch(e) {
+      console.error("ステータス確認エラー:", e);
+      alert("アカウント情報の取得に失敗しました。");
+    }
   } else {
+    // 未ログイン
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('appScreen').style.display   = 'none';
+    if(document.getElementById('subscriptionScreen')) {
+      document.getElementById('subscriptionScreen').style.display = 'none';
+    }
   }
 });
 
@@ -521,6 +562,36 @@ async function loadConfigFromServer() {
 
 function setSyncStatus(msg) {
   document.getElementById('syncStatus').textContent = msg;
+}
+
+// ════════════════════════════════════════
+// ★ 追加: サブスクリプション決済画面への遷移処理
+// ════════════════════════════════════════
+async function startSubscription() {
+  const btn = document.getElementById('subscribeBtn');
+  btn.innerText = '準備中...';
+  btn.disabled = true;
+
+  try {
+    const headers = await getAuthHeader();
+    const res = await fetch('/api/subscription/create-checkout', { 
+      method: 'POST', 
+      headers 
+    });
+    const data = await res.json();
+    
+    if (data.url) {
+      window.location.href = data.url; // Stripeの決済画面へリダイレクト
+    } else {
+      alert("決済画面の準備に失敗しました。");
+      btn.innerText = 'プランに登録する';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    alert("エラーが発生しました: " + e.message);
+    btn.innerText = 'プランに登録する';
+    btn.disabled = false;
+  }
 }
 
 // ════════════════════════════════════════
@@ -674,372 +745,4 @@ const tourSteps = [
 function startTour() { tourStep = 0; document.getElementById("tourOverlay").style.display = "block"; showStep(); }
 function showStep() {
   document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target"));
-  const step = tourSteps[tourStep]; const target = document.getElementById(step.id); const bubble = document.getElementById("tourBubble");
-  target.classList.add("highlight-target");
-  document.getElementById("tourMessage").innerText = `${tourStep+1} / ${tourSteps.length}\n${step.msg}`;
-  bubble.style.display = "block";
-  const rect = target.getBoundingClientRect(); const bubbleRect = bubble.getBoundingClientRect();
-  let topPos = rect.bottom + 15;
-  if (topPos + bubbleRect.height > window.innerHeight) topPos = rect.top - bubbleRect.height - 15;
-  let leftPos = rect.left;
-  if (leftPos + bubbleRect.width > window.innerWidth) leftPos = window.innerWidth - bubbleRect.width - 20;
-  bubble.style.top = (window.scrollY + topPos) + "px"; bubble.style.left = Math.max(10, leftPos) + "px";
-}
-function nextTour() { tourStep < tourSteps.length-1 ? (tourStep++, showStep()) : closeTour(); }
-function prevTour() { if (tourStep > 0) { tourStep--; showStep(); } }
-function closeTour() { document.getElementById("tourOverlay").style.display = "none"; document.getElementById("tourBubble").style.display = "none"; document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target")); }
-
-document.getElementById("settingBtn").addEventListener("click", () => {
-  document.getElementById("mainContainer").classList.add("setting-open");
-  document.getElementById("settingPanel").style.display = "block";
-  setTimeout(startTour, 300);
-});
-function closeSetting() {
-  const container = document.getElementById("mainContainer");
-  const el = document.getElementById("floatingContainer");
-  container.classList.remove("setting-open");
-  document.getElementById("settingPanel").style.display = "none";
-  el.style.position=""; el.style.top=""; el.style.left=""; el.style.bottom=""; el.style.right="";
-  clearPreviewHighlight(); closeTour();
-}
-function togglePreview() {
-  const wrapper = document.getElementById("exchangeTableWrapper");
-  const btn     = document.getElementById("previewToggleBtn");
-  const isHidden = wrapper.style.display === "none";
-  wrapper.style.display = isHidden ? "block" : "none";
-  btn.innerText = isHidden ? "非表示" : "表示";
-}
-
-// ★ 保存ボタン → クラウドへ保存
-document.getElementById("saveBtn").addEventListener("click", async () => {
-  config.vaultTotal = Number(document.getElementById("set-vault-total").value);
-  await saveConfigToServer();
-  closeSetting();
-  init();
-});
-
-// ════════════════════════════════════════
-// 履歴の保存・表示
-// ════════════════════════════════════════
-document.getElementById("saveSnapshotBtn").addEventListener("click", async () => {
-  const memo = prompt("メモを入力してください（省略可）") ?? "";
-  const total = document.getElementById("total").innerText;
-  const diff  = document.getElementById("diff").innerText;
-  const need  = document.getElementById("needMoney").innerText;
-  const snapshot = { inputs: savedInputs, total, diff, need, memo, savedAt: new Date().toISOString() };
-  try {
-    setSyncStatus('保存中...');
-    const headers = await getAuthHeader();
-    const res = await fetch('/api/history/save', { method:'POST', headers, body: JSON.stringify({ snapshot }) });
-    const data = await res.json();
-    setSyncStatus(data.ok ? '💾 保存完了' : '⚠️ 保存失敗');
-  } catch(e) { setSyncStatus('⚠️ 保存失敗'); }
-  setTimeout(() => setSyncStatus(''), 3000);
-});
-
-// ★ 履歴表示関数
-function switchHistoryView(view) {
-  document.querySelectorAll('.history-view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.history-tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('history' + view.charAt(0).toUpperCase() + view.slice(1) + 'View').classList.add('active');
-  event.target.classList.add('active');
-  
-  selectedHistoryIds.clear();
-  document.getElementById('selectAllCheckbox').checked = false;
-  updateHistoryButtonVisibility();
-}
-
-function updateHistoryButtonVisibility() {
-  const isTableView = document.getElementById('historyTableView').classList.contains('active');
-  document.getElementById('historySelectDelBtn').style.display = isTableView ? 'block' : 'none';
-  document.getElementById('historyDeleteAllBtn').style.display = isTableView ? 'block' : 'none';
-}
-
-document.getElementById("historyBtn").addEventListener("click", async () => {
-  document.getElementById("historyOverlay").style.display = 'flex';
-  document.getElementById("historyList").innerHTML = '<p style="color:#aaa;text-align:center;">読み込み中...</p>';
-  document.getElementById("historyCalendar").innerHTML = '<p style="color:#aaa;text-align:center;">読み込み中...</p>';
-  document.getElementById("historyTableBody").innerHTML = '';
-  selectedHistoryIds.clear();
-  updateHistoryButtonVisibility();
-
-  try {
-    const headers = await getAuthHeader();
-    const res = await fetch('/api/history/load', { method:'GET', headers });
-    const data = await res.json();
-    currentHistoryData = data.history || [];
-    
-    if (!currentHistoryData || currentHistoryData.length === 0) {
-      document.getElementById("historyList").innerHTML = '<p style="color:#aaa;text-align:center;">履歴がありません</p>';
-      document.getElementById("historyCalendar").innerHTML = '<p style="color:#aaa;text-align:center;">履歴がありません</p>';
-      document.getElementById("historyTableBody").innerHTML = '';
-      return;
-    }
-
-    renderHistoryList();
-    renderHistoryCalendar();
-    renderHistoryTable();
-  } catch(e) {
-    document.getElementById("historyList").innerHTML = '<p style="color:#eb4d4b;text-align:center;">読み込み失敗</p>';
-    document.getElementById("historyCalendar").innerHTML = '<p style="color:#eb4d4b;text-align:center;">読み込み失敗</p>';
-  }
-});
-
-function renderHistoryList() {
-  const list = document.getElementById("historyList");
-  list.innerHTML = currentHistoryData.map(h => {
-    const d = new Date(h.savedAt);
-    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div class="history-item">
-      <div class="history-item-info">
-        <div class="history-item-date">${dateStr}</div>
-        <div class="history-item-total">合計: ${h.total}円　差額: ${h.diff}円　補充: ${h.need}</div>
-        ${h.memo ? `<div class="history-item-memo">📝 ${h.memo}</div>` : ''}
-      </div>
-      <div class="history-item-btns">
-        <button class="history-del-btn" onclick="deleteHistory('${h.id}')">削除</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderHistoryCalendar() {
-  const historyByDate = {};
-  currentHistoryData.forEach(h => {
-    const d = new Date(h.savedAt);
-    const dateKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    if (!historyByDate[dateKey]) historyByDate[dateKey] = [];
-    historyByDate[dateKey].push(h);
-  });
-
-  const months = {};
-  Object.keys(historyByDate).forEach(dateKey => {
-    const [year, month] = dateKey.split('-');
-    const monthKey = `${year}-${month}`;
-    if (!months[monthKey]) months[monthKey] = {};
-    months[monthKey][dateKey] = historyByDate[dateKey];
-  });
-
-  let html = '';
-  Object.keys(months).sort().forEach(monthKey => {
-    const [year, month] = monthKey.split('-');
-    const d = new Date(year, month - 1);
-    const monthName = `${year}年${month}月`;
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
-    html += `<div class="calendar-month"><div class="calendar-header">${monthName}</div>`;
-    html += '<div class="calendar-grid">';
-    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-    dayNames.forEach(name => html += `<div class="calendar-day-name">${name}</div>`);
-    
-    const currentDate = new Date(startDate);
-    for (let i = 0; i < 42; i++) {
-      const dateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`;
-      const isCurrentMonth = currentDate.getMonth() === d.getMonth();
-      const hasHistory = months[monthKey][dateKey];
-      const dayHtml = `<div class="calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${hasHistory ? 'has-history' : ''}">
-        <div class="calendar-day-num">${currentDate.getDate()}</div>
-        ${hasHistory ? `<div class="calendar-day-count">${hasHistory.length}件</div>` : ''}
-      </div>`;
-      html += dayHtml;
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    html += '</div></div>';
-  });
-
-  document.getElementById("historyCalendar").innerHTML = html || '<p style="color:#aaa;text-align:center;">履歴がありません</p>';
-}
-
-function renderHistoryTable() {
-  const tbody = document.getElementById("historyTableBody");
-  tbody.innerHTML = currentHistoryData.map((h, idx) => {
-    const d = new Date(h.savedAt);
-    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<tr>
-      <td><input type="checkbox" class="history-row-checkbox" data-id="${h.id}" onchange="updateSelectedHistoryIds()"></td>
-      <td>${dateStr}</td>
-      <td>${h.total}円</td>
-      <td>${h.diff}円</td>
-      <td>${h.need}</td>
-      <td>${h.memo || '-'}</td>
-    </tr>`;
-  }).join('');
-}
-
-function updateSelectedHistoryIds() {
-  selectedHistoryIds.clear();
-  document.querySelectorAll('.history-row-checkbox:checked').forEach(checkbox => {
-    selectedHistoryIds.add(checkbox.dataset.id);
-  });
-}
-
-function toggleSelectAll() {
-  const isChecked = document.getElementById('selectAllCheckbox').checked;
-  document.querySelectorAll('.history-row-checkbox').forEach(checkbox => {
-    checkbox.checked = isChecked;
-  });
-  updateSelectedHistoryIds();
-}
-
-async function deleteHistory(id) {
-  if (!confirm("この履歴を削除しますか？")) return;
-  try {
-    const headers = await getAuthHeader();
-    await fetch('/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id }) });
-    document.getElementById("historyBtn").click();
-  } catch(e) { alert("削除失敗"); }
-}
-
-async function deleteSelectedHistory() {
-  if (selectedHistoryIds.size === 0) { alert("削除する履歴を選択してください"); return; }
-  if (!confirm(`${selectedHistoryIds.size}件の履歴を削除しますか？`)) return;
-  try {
-    const headers = await getAuthHeader();
-    for (const id of selectedHistoryIds) {
-      await fetch('/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id }) });
-    }
-    document.getElementById("historyBtn").click();
-  } catch(e) { alert("削除失敗"); }
-}
-
-async function deleteAllHistory() {
-  if (!confirm("すべての履歴を削除しますか？\n(この操作は取り消せません)")) return;
-  try {
-    const headers = await getAuthHeader();
-    for (const h of currentHistoryData) {
-      await fetch('/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id: h.id }) });
-    }
-    document.getElementById("historyBtn").click();
-  } catch(e) { alert("削除失敗"); }
-}
-
-function printHistory() {
-  const printWindow = window.open('', '', 'width=800,height=600');
-  const tableHtml = document.getElementById('historyDataTable').outerHTML;
-  printWindow.document.write(`
-    <html><head><title>履歴</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 20px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-      th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-      th { background: #1e3799; color: white; }
-      tr:nth-child(even) { background: #f9f9f9; }
-      input[type="checkbox"] { display: none; }
-    </style>
-    </head><body>
-    <h2>金庫管理 - 履歴</h2>
-    <p>出力日時: ${new Date().toLocaleString()}</p>
-    ${tableHtml}
-    </body></html>
-  `);
-  printWindow.document.close();
-  printWindow.print();
-}
-
-function exportHistoryCsv() {
-  let csvContent = "data:text/csv;charset=utf-8,\uFEFF日時,合計,差額,補充必要額,メモ\n";
-  currentHistoryData.forEach(h => {
-    const d = new Date(h.savedAt);
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const memo = (h.memo || '').replace(/"/g, '""');
-    csvContent += `"${dateStr}","${h.total}","${h.diff}","${h.need}","${memo}"\n`;
-  });
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0,10);
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `金庫管理_履歴_${dateStr}.csv`);
-  document.body.appendChild(link); link.click(); document.body.removeChild(link);
-}
-
-function closeHistory() { 
-  document.getElementById("historyOverlay").style.display = 'none'; 
-  selectedHistoryIds.clear();
-}
-
-document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("数値をすべてクリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
-document.getElementById("inputBody").addEventListener("input", calculate);
-
-document.getElementById("printBtn").addEventListener("click", () => { window.print(); });
-
-document.getElementById("csvBtn").addEventListener("click", () => {
-  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-  csvContent += "金額,棒金(入力),枚数(入力),合計,棒金差,枚数差\n";
-  prices.forEach(p => {
-    const barIn  = document.querySelector(`.in-bar[data-price="${p}"]`);
-    const coinIn = document.querySelector(`.in-coin[data-price="${p}"]`);
-    const barVal  = barIn  ? barIn.value  : "";
-    const coinVal = coinIn ? coinIn.value : "";
-    const sumVal  = document.getElementById(`sum-${p}`).innerText.replace(/,/g, "");
-    const rowEx   = document.querySelector(`#exchangeBody tr[data-row-price="${p}"]`);
-    const dBar    = rowEx.children[1].innerText;
-    const dCoin   = rowEx.children[2].innerText;
-    csvContent += `${p},${barVal},${coinVal},${sumVal},${dBar},${dCoin}\n`;
-  });
-  const total     = document.getElementById("total").innerText.replace(/,/g, "");
-  const diff      = document.getElementById("diff").innerText.replace(/,/g, "");
-  const available = document.getElementById("availableMoney").innerText.replace(/,/g, "").replace("円","");
-  const need      = document.getElementById("needMoney").innerText.replace(/,/g, "").replace("円","");
-  csvContent += `\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n使用可能金額,,,${available}\n補充が必要な金額,,,${need}\n`;
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0,10);
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `金庫管理データ_${dateStr}.csv`);
-  document.body.appendChild(link); link.click(); document.body.removeChild(link);
-});
-
-// ドラッグ操作
-(function() {
-  const el = document.getElementById("floatingContainer");
-  const toggleBtn = document.getElementById("previewToggleBtn");
-  let isDragging = false, offsetX, offsetY, startX, startY, hasMoved = false;
-  const onStart = (e) => {
-    if (!document.getElementById("mainContainer").classList.contains("setting-open")) return;
-    if (e.target.closest('input, select, .close-panel')) return;
-    isDragging = true;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    startX = clientX; startY = clientY; hasMoved = false;
-    const rect = el.getBoundingClientRect();
-    offsetX = clientX - rect.left; offsetY = clientY - rect.top;
-    el.style.transition = "none"; el.style.bottom = "auto"; el.style.right = "auto";
-  };
-  const onMove = (e) => {
-    if (!isDragging) return;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    if (Math.abs(clientX-startX) > 5 || Math.abs(clientY-startY) > 5) hasMoved = true;
-    el.style.left = (clientX-offsetX) + "px"; el.style.top = (clientY-offsetY) + "px";
-    if(e.cancelable) e.preventDefault();
-  };
-  const onEnd = () => { isDragging = false; el.style.transition = ""; };
-  el.addEventListener("mousedown", onStart); el.addEventListener("touchstart", onStart, {passive:false});
-  window.addEventListener("mousemove", onMove); window.addEventListener("touchmove", onMove, {passive:false});
-  window.addEventListener("mouseup", onEnd); window.addEventListener("touchend", onEnd);
-  toggleBtn.addEventListener("click", (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); return; } togglePreview(); });
-})();
-
-document.addEventListener('focusin', function(e) {
-  if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
-});
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-    e.preventDefault();
-    const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
-    const currentIndex = navRoute.indexOf(e.target);
-    if (currentIndex > -1) navRoute[(currentIndex+1) % navRoute.length].focus();
-  }
-});
-
-const originalInit = init;
-init = function() {
-  originalInit();
-  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode','numeric'));
-};
-</script>
-</body>
-</html>
+  const
