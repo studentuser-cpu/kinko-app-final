@@ -1,3 +1,4 @@
+console.log("DEBUG: STRIPE_PRICE_ID is", process.env.STRIPE_PRICE_ID);
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
