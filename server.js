@@ -94,6 +94,7 @@ app.get('/api/subscription/status', authenticate, async (req, res) => {
 app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
   try {
     const domainURL = process.env.CLIENT_URL || 'http://localhost:3000';
+    console.log("DEBUG: domainURL is", domainURL); // ★これを入れる
 
 const session = await stripe.checkout.sessions.create({
   mode: 'subscription',
