@@ -82,9 +82,13 @@ async function authenticate(req, res, next) {
 }
 
 app.get('/api/subscription/status', authenticate, async (req, res) => {
-  // データベースを見ずに、強制的に 'active' を返す
-  console.log("DEBUG: ユーザー判定を強制的にactiveにしました。UID:", req.uid);
-  res.json({ status: 'active' }); 
+  try {
+    const doc = await db.collection('users').doc(req.uid).get();
+    if (!doc.exists) return res.json({ status: 'inactive' });
+    res.json({ status: doc.data().subscriptionStatus || 'inactive' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
