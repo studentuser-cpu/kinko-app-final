@@ -93,16 +93,23 @@ app.get('/api/subscription/status', authenticate, async (req, res) => {
 
 app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
   try {
-    const domainURL = process.env.CLIENT_URL || 'http://localhost:10000';
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      customer_email: req.email,
-      client_reference_id: req.uid,
-      line_items: [{ price: process.env.STRIPE_PRICE_ID.trim(), quantity: 1 }],
-      success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${domainURL}/`,
-    });
+    const domainURL = process.env.CLIENT_URL || 'http://localhost:3000';
+
+const session = await stripe.checkout.sessions.create({
+  mode: 'subscription',
+  payment_method_types: ['card'],
+  customer_email: req.email,
+  client_reference_id: req.uid,
+  line_items: [
+    {
+      price: process.env.STRIPE_PRICE_ID.trim(),
+      quantity: 1,
+    },
+  ],
+  // ここで動的にURLを指定
+  success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${domainURL}/`,
+});
     res.json({ url: session.url });
   } catch (e) {
     res.status(500).json({ error: e.message });
