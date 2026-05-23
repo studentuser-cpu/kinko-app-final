@@ -2,22 +2,19 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const admin = require('firebase-admin');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // ★追加: Stripeの初期化
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 app.use(cors());
 
 // Firebase Admin SDKの初期化
-// 環境変数 FIREBASE_SERVICE_ACCOUNT にサービスアカウントJSONを文字列で設定してください
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 const db = admin.firestore();
 
-// =========================================================================
-// ★ 追加：Stripe Webhook (必ず express.json() の前に配置する！)
-// =========================================================================
+// Stripe Webhook (必ず express.json() の前に配置)
 app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -30,12 +27,10 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // 決済成功時やサブスク更新時にFirestoreのユーザーステータスを更新
   if (event.type === 'checkout.session.completed' || event.type === 'customer.subscription.updated') {
     const sessionOrSub = event.data.object;
     const customerId = sessionOrSub.customer;
     
-    // Checkout完了時はメタデータからFirebaseのUIDを取得できる
     if (event.type === 'checkout.session.completed') {
       const uid = sessionOrSub.client_reference_id; 
       await db.collection('users').doc(uid).set({
@@ -44,7 +39,6 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
     } else {
-      // サブスク更新/キャンセルの場合はCustomer IDからユーザーを探して更新
       const usersRef = db.collection('users');
       const snapshot = await usersRef.where('stripeCustomerId', '==', customerId).get();
       if (!snapshot.empty) {
@@ -69,11 +63,9 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   res.json({ received: true });
 });
 
-// ここから下は通常のJSONパースを有効にする
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── ミドルウェア：Firebaseトークンを検証してユーザーIDを取得 ───
 async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace('Bearer ', '');
@@ -81,16 +73,13 @@ async function authenticate(req, res, next) {
   try {
     const decoded = await admin.auth().verifyIdToken(token);
     req.uid = decoded.uid;
-    req.email = decoded.email; // ★追加: Checkout用にメールアドレスを渡す
+    req.email = decoded.email;
     next();
   } catch (e) {
     return res.status(401).json({ error: '認証失敗: ' + e.message });
   }
 }
 
-// =========================================================================
-// ★ 追加：Stripe Checkout セッションの作成とステータス確認API
-// =========================================================================
 app.get('/api/subscription/status', authenticate, async (req, res) => {
   try {
     const doc = await db.collection('users').doc(req.uid).get();
@@ -104,29 +93,21 @@ app.get('/api/subscription/status', authenticate, async (req, res) => {
 app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
   try {
     const domainURL = process.env.CLIENT_URL || 'http://localhost:10000';
-    
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       customer_email: req.email,
       client_reference_id: req.uid,
-      line_items: [
-        {
-          price: process.env.STRIPE_PRICE_ID,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
       success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${domainURL}/`,
     });
-
     res.json({ url: session.url });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// ─── API: 設定を保存 ───
 app.post('/api/config/save', authenticate, async (req, res) => {
   const { config } = req.body;
   if (!config) return res.status(400).json({ error: 'configがありません' });
@@ -141,7 +122,6 @@ app.post('/api/config/save', authenticate, async (req, res) => {
   }
 });
 
-// ─── API: 設定を読み込み ───
 app.get('/api/config/load', authenticate, async (req, res) => {
   try {
     const doc = await db.collection('vaultConfigs').doc(req.uid).get();
@@ -152,11 +132,9 @@ app.get('/api/config/load', authenticate, async (req, res) => {
   }
 });
 
-// ─── API: 計算ロジック（既存のまま） ───
 app.post('/api/calculate', (req, res) => {
   const { inputs, config } = req.body;
   const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
-
   let currentTotal = 0, needMoney = 0, availableMoney = 0;
   let results = {};
 
@@ -164,11 +142,8 @@ app.post('/api/calculate', (req, res) => {
     const s = config.denoms[price];
     const barVal = Number(inputs[price]?.b || 0);
     const coinVal = Number(inputs[price]?.c || 0);
-
-    let rowAmount = (s.bMode !== "none" || s.cMode !== "none")
-      ? ((barVal * s.perBar) + coinVal) * price : 0;
+    let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
     currentTotal += rowAmount;
-
     let bText = "-", bClass = "";
     if (s.bMode !== "hidden" && s.bMode !== "none") {
       const dBar = barVal - s.tBar;
@@ -177,7 +152,6 @@ app.post('/api/calculate', (req, res) => {
       if (dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
       if (dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
     }
-
     let cText = "-", cClass = "";
     if (s.cMode !== "hidden" && s.cMode !== "none") {
       const dCoin = coinVal - s.tCoin;
@@ -186,15 +160,12 @@ app.post('/api/calculate', (req, res) => {
       if (dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
       if (dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
     }
-
     results[price] = { rowAmount, bText, bClass, cText, cClass };
   });
-
   const diffVal = currentTotal - config.vaultTotal;
   res.json({ currentTotal, diffVal, needMoney, availableMoney, results });
 });
 
-// ─── API: 履歴を保存 ───
 app.post('/api/history/save', authenticate, async (req, res) => {
   const { snapshot } = req.body;
   if (!snapshot) return res.status(400).json({ error: 'snapshotがありません' });
@@ -210,14 +181,9 @@ app.post('/api/history/save', authenticate, async (req, res) => {
   }
 });
 
-// ─── API: 履歴を取得（新しい順・最大50件） ───
 app.get('/api/history/load', authenticate, async (req, res) => {
   try {
-    const snap = await db.collection('vaultHistory')
-      .where('uid', '==', req.uid)
-      .orderBy('savedAt', 'desc')
-      .limit(50)
-      .get();
+    const snap = await db.collection('vaultHistory').where('uid', '==', req.uid).orderBy('savedAt', 'desc').limit(50).get();
     const history = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json({ history });
   } catch (e) {
@@ -225,7 +191,6 @@ app.get('/api/history/load', authenticate, async (req, res) => {
   }
 });
 
-// ─── API: 履歴を削除 ───
 app.post('/api/history/delete', authenticate, async (req, res) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ error: 'idがありません' });
@@ -239,7 +204,6 @@ app.post('/api/history/delete', authenticate, async (req, res) => {
   }
 });
 
-// ─── SPAフォールバック ───
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
