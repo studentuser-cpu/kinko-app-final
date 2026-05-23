@@ -2,21 +2,78 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const admin = require('firebase-admin');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripeの初期化
 
 const app = express();
 app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Firebase Admin SDKの初期化
-// 環境変数 FIREBASE_SERVICE_ACCOUNT にサービスアカウントJSONを文字列で設定してください
+// --- Firebase Admin SDKの初期化 ---
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 const db = admin.firestore();
 
+// =========================================================================
+// ★ 追加：Stripe Webhook (必ず express.json() の前に配置する！)
+// =========================================================================
+app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET; // Stripeダッシュボードで取得するWebhookシークレット
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error(`Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // 決済成功時やサブスク更新時にFirestoreのユーザーステータスを更新
+  if (event.type === 'checkout.session.completed' || event.type === 'customer.subscription.updated') {
+    const sessionOrSub = event.data.object;
+    const customerId = sessionOrSub.customer;
+    
+    // Checkout完了時はメタデータからFirebaseのUIDを取得できる
+    if (event.type === 'checkout.session.completed') {
+      const uid = sessionOrSub.client_reference_id; 
+      await db.collection('users').doc(uid).set({
+        stripeCustomerId: customerId,
+        subscriptionStatus: 'active',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } else {
+      // サブスク更新/キャンセルの場合はCustomer IDからユーザーを探して更新
+      const usersRef = db.collection('users');
+      const snapshot = await usersRef.where('stripeCustomerId', '==', customerId).get();
+      if (!snapshot.empty) {
+        snapshot.forEach(async doc => {
+          await doc.ref.update({
+            subscriptionStatus: sessionOrSub.status, // 'active', 'canceled', 'past_due' など
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      }
+    }
+  }
+
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object;
+    const snapshot = await db.collection('users').where('stripeCustomerId', '==', subscription.customer).get();
+    if (!snapshot.empty) {
+      snapshot.forEach(async doc => await doc.ref.update({ subscriptionStatus: 'canceled' }));
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// ここから下は通常のJSONパースを有効にする
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
 // ─── ミドルウェア：Firebaseトークンを検証してユーザーIDを取得 ───
+// （既存のコードそのまま）
 async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace('Bearer ', '');
@@ -24,10 +81,53 @@ async function authenticate(req, res, next) {
   try {
     const decoded = await admin.auth().verifyIdToken(token);
     req.uid = decoded.uid;
+    req.email = decoded.email; // 追加: Checkoutにメールアドレスを渡すため
     next();
   } catch (e) {
     return res.status(401).json({ error: '認証失敗: ' + e.message });
   }
+}
+
+// =========================================================================
+// ★ 追加：Stripe Checkout セッションの作成とステータス確認
+// =========================================================================
+
+// サブスクリプション状態の確認API
+app.get('/api/subscription/status', authenticate, async (req, res) => {
+  try {
+    const doc = await db.collection('users').doc(req.uid).get();
+    if (!doc.exists) return res.json({ status: 'inactive' });
+    res.json({ status: doc.data().subscriptionStatus || 'inactive' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Checkout画面のURLを生成するAPI
+app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
+  try {
+    const domainURL = process.env.CLIENT_URL || 'http://localhost:10000'; // 本番環境のURLを設定
+    
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      customer_email: req.email,
+      client_reference_id: req.uid, // ここでFirebaseのUIDをStripeに渡す
+      line_items: [
+        {
+          price: process.env.STRIPE_PRICE_ID, // Step1で取得した price_xxxxxx
+          quantity: 1,
+        },
+      ],
+      success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${domainURL}/`,
+    });
+
+    res.json({ url: session.url });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 }
 
 // ─── API: 設定を保存 ───
