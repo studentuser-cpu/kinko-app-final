@@ -18,7 +18,8 @@ const db = admin.firestore();
 // Stripe Webhook (必ず express.json() の前に配置)
 app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // .trim() を追加して、環境変数に含まれる目に見えないスペースや改行を強制的に除去します
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ? process.env.STRIPE_WEBHOOK_SECRET.trim() : undefined;
   let event;
 
   try {
