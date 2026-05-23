@@ -1,1114 +1,224 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>金庫管理 R.W</title>
-<meta property="og:title" content="金庫管理 R.W">
-<meta property="og:description" content="棒金・バラの枚数を入力するだけで、金庫の残高と補充必要額を素早く計算します。">
-<meta property="og:type" content="website">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+console.log("DEBUG: STRIPE_PRICE_ID is", process.env.STRIPE_PRICE_ID);
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const admin = require('firebase-admin');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+const app = express();
+app.use(cors());
 
-<style>
-/* ════════════════════════════════════════
-   ログイン画面
-════════════════════════════════════════ */
-#loginScreen {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; background: #f0f2f5;
-}
-.login-card {
-  background: white; border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  padding: 40px 36px; width: 340px; max-width: 95vw;
-}
-.login-card h2 {
-  margin: 0 0 6px 0; color: #1e3799; font-size: 22px; text-align: center;
-}
-.login-card p {
-  margin: 0 0 24px 0; color: #636e72; font-size: 13px; text-align: center;
-}
-.login-card label { display: block; font-size: 13px; color: #2f3542; margin-bottom: 4px; font-weight: bold; }
-.login-card input[type="email"],
-.login-card input[type="password"] {
-  width: 100%; box-sizing: border-box; padding: 10px 12px;
-  border: 1px solid #ced4da; border-radius: 6px; font-size: 14px;
-  margin-bottom: 16px; outline: none;
-}
-.login-card input:focus { border-color: #1e3799; box-shadow: 0 0 0 3px rgba(30,55,153,0.1); }
-.btn-primary {
-  width: 100%; padding: 12px; background: #1e3799; color: white;
-  border: none; border-radius: 6px; font-size: 15px; font-weight: bold;
-  cursor: pointer; margin-bottom: 10px;
-}
-.btn-primary:hover { background: #3867d6; }
-.btn-secondary {
-  width: 100%; padding: 10px; background: white; color: #1e3799;
-  border: 1px solid #1e3799; border-radius: 6px; font-size: 14px;
-  cursor: pointer;
-}
-.btn-secondary:hover { background: #eef2f7; }
-#loginError { color: #eb4d4b; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; }
-.login-divider { text-align: center; color: #aaa; margin: 12px 0; font-size: 12px; }
+// Firebase Admin SDKの初期化
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+const db = admin.firestore();
 
-/* ════════════════════════════════════════
-   ★ 追加: サブスクリプション画面
-════════════════════════════════════════ */
-#subscriptionScreen {
-  display: none; align-items: center; justify-content: center;
-  min-height: 100vh; background: #f0f2f5; flex-direction: column;
-}
-.sub-card {
-  background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  padding: 40px 36px; width: 400px; max-width: 95vw; text-align: center;
-}
-.sub-card h2 { color: #1e3799; margin-top: 0; }
-.sub-btn {
-  background: #2ed573; color: white; border: none; padding: 15px 30px;
-  font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer;
-  margin-top: 20px; width: 100%; transition: background 0.2s;
-}
-.sub-btn:hover { background: #26b360; }
+// Stripe Webhook (必ず express.json() の前に配置)
+app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  let event;
 
-/* ════════════════════════════════════════
-   メインアプリ（既存スタイルそのまま）
-════════════════════════════════════════ */
-#appScreen { display: none; }
-
-body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #f0f2f5; padding: 0; margin: 0; color: #2f3542; }
-.header-bar { display: flex; justify-content: space-between; align-items: center; background: #1e3799; color: white; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.header-user { font-size: 13px; opacity: 0.85; }
-.logout-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
-.logout-btn:hover { background: rgba(255,255,255,0.35); }
-.sync-status { font-size: 11px; opacity: 0.7; }
-
-.container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; max-width: 100vw; box-sizing: border-box; }
-.tables-wrapper { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; width: 100%; transition: all 0.3s ease; }
-
-#floatingContainer { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-#exchangeTableWrapper { background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; }
-
-.container.setting-open #floatingContainer { position: fixed; bottom: 20px; right: 20px; z-index: 1001; cursor: grab; touch-action: none; }
-.container.setting-open #exchangeTableWrapper { background: rgba(255,255,255,0.98); border: 3px solid #1e3799; padding: 10px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.4); zoom: 0.8; max-height: 60vh; overflow-y: auto; }
-.container.setting-open #floatingContainer:active { cursor: grabbing; }
-#previewToggleBtn { display: none; background: #1e3799; color: white; border: 2px solid white; border-radius: 20px; padding: 6px 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-weight: bold; }
-.container.setting-open #previewToggleBtn { display: block !important; }
-.container.setting-open #mainTableWrapper { display: none; }
-
-table { border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; white-space: nowrap; }
-td, th { border: 1px solid #e1e4e8; padding: 10px; text-align: center; min-width: 80px; transition: all 0.2s; }
-th { background: #1e3799; color: white; font-size: 13px; }
-input[type="number"], input[type="text"], input[type="password"], select { text-align: center; font-size: 14px; border: 1px solid #ced4da; border-radius: 4px; padding: 3px; outline: none; }
-input[type="number"]:focus, select:focus { border-color: #fbc531; box-shadow: 0 0 5px rgba(251,197,49,0.5); }
-input[type="number"] { width: 65px; }
-.total { font-weight: bold; background: #f8f9fa; }
-.diff-ok { color: #2f3542; }
-.diff-ng { color: #eb4d4b; font-weight: bold; }
-.need { background: #ffeaa7; font-weight: bold; }
-.txt-minus { color: #eb4d4b; font-weight: bold; }
-.txt-plus  { color: #0097e6; font-weight: bold; }
-.txt-ok    { color: #2f3542; font-weight: bold; }
-.bg-red    { background-color: #ffcccc; }
-.bg-yellow { background-color: #ffeaa7; }
-.bg-ok     { background-color: #f1f2f6; }
-.modal-panel { display: none; background: #fff; border-radius: 12px; border: 1px solid #dcdde1; padding: 25px; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.2); width: 1100px; max-width: 98%; margin-bottom: 40px; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f2f6; padding-bottom: 10px; }
-.help-section { background: #f8f9fa; border: 1px solid #d1d8e0; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; }
-@media(min-width: 768px) { .help-section { flex-direction: row; } }
-.help-col { flex: 1; font-size: 13px; line-height: 1.6; }
-.help-col h4 { margin: 0 0 8px 0; color: #1e3799; border-bottom: 2px solid #1e3799; display: inline-block; }
-.help-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; width: 36px; text-align: center; margin-right: 5px; }
-.security-section { background: #fff3cd; border: 1px solid #ffe69c; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
-.tour-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; pointer-events: none; }
-.tour-bubble { position: absolute; background: #1e3799; color: white; padding: 15px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 2001; width: 260px; font-size: 14px; pointer-events: auto; white-space: pre-wrap; line-height: 1.5; }
-.tour-btn-group { display: flex; justify-content: space-between; margin-top: 10px; }
-.tour-btn { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 3px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
-.highlight-target { outline: 6px solid #fbc531 !important; outline-offset: 2px; position: relative; z-index: 2001 !important; }
-.preview-highlight { box-shadow: inset 0 0 0 3px #e15f41; background-color: rgba(251,197,49,0.2) !important; position: relative; }
-.settings-tables-container { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
-.settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.settings-table-wrapper h4 { margin-top: 0; color: #1e3799; display: flex; align-items: center; gap: 8px; }
-td.avail-active { background-color: #e8f4fd !important; }
-td.edge-top { border-top: 2px solid black !important; }
-td.edge-bottom { border-bottom: 2px solid black !important; }
-td.edge-left { border-left: 2px solid black !important; }
-td.edge-right { border-right: 2px solid black !important; }
-
-/* 履歴パネル */
-#historyOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000; align-items:center; justify-content:center; }
-#historyPanel { background:white; border-radius:12px; padding:25px; width:900px; max-width:95vw; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
-#historyPanel h3 { margin:0 0 15px 0; color:#1e3799; }
-
-.history-controls { display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; }
-.history-controls button { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; }
-.history-tab-btn { background:#e1e4e8; color:#2f3542; }
-.history-tab-btn.active { background:#1e3799; color:white; }
-.history-action-btn { padding:8px 12px; background:#747d8c; color:white; }
-.history-action-btn:hover { background:#5f686f; }
-.history-action-btn.danger { background:#ff7675; }
-.history-action-btn.danger:hover { background:#d63031; }
-
-.history-view { display:none; }
-.history-view.active { display:block; overflow-y:auto; flex:1; }
-
-#historyList { display:flex; flex-direction:column; gap:10px; }
-.history-item { border:1px solid #e1e4e8; border-radius:8px; padding:12px 15px; display:flex; justify-content:space-between; align-items:center; }
-.history-item-info { flex:1; }
-.history-item-date { font-size:13px; color:#636e72; }
-.history-item-total { font-size:16px; font-weight:bold; color:#1e3799; }
-.history-item-memo { font-size:12px; color:#2f3542; margin-top:3px; }
-.history-item-btns { display:flex; gap:6px; }
-.history-del-btn { background:#ff7675; color:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px; }
-
-#historyCalendar { padding:15px; }
-.calendar-month { margin-bottom:30px; }
-.calendar-header { text-align:center; font-weight:bold; font-size:16px; margin-bottom:10px; color:#1e3799; }
-.calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:15px; }
-.calendar-day-name { text-align:center; font-weight:bold; font-size:12px; color:#636e72; padding:5px; }
-.calendar-day { border:1px solid #e1e4e8; border-radius:4px; padding:8px; min-height:50px; background:#fafbfc; cursor:pointer; transition:all 0.2s; }
-.calendar-day:hover { background:#e8f4fd; }
-.calendar-day.other-month { color:#aaa; }
-.calendar-day.has-history { background:#d0e8ff; border-color:#0097e6; }
-.calendar-day.has-history:hover { background:#a8d5ff; }
-.calendar-day-num { font-weight:bold; margin-bottom:3px; }
-.calendar-day-count { font-size:11px; color:#636e72; }
-
-.history-table-view { overflow-x:auto; }
-.history-table-view table { width:100%; font-size:13px; }
-.history-table-view th { background:#1e3799; color:white; padding:8px; }
-.history-table-view td { border:1px solid #e1e4e8; padding:8px; }
-.history-table-view input[type="checkbox"] { cursor:pointer; }
-
-.history-close-btn { background:#dfe6e9; color:#2f3542; border:none; border-radius:6px; padding:8px 20px; cursor:pointer; font-size:14px; margin-top:15px; align-self:flex-end; }
-
-@media print {
-  body { background: white; -webkit-user-select: auto; user-select: auto; }
-  .header-bar, #tourOverlay, #tourBubble, .modal-panel, #floatingContainer, .action-buttons { display: none !important; }
-  .container { padding: 0; gap: 10px; }
-  .tables-wrapper { display: block; }
-  table { border: 1px solid #ccc; box-shadow: none; margin-bottom: 20px; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
-  td, th { padding: 8px; }
-  input[type="number"] { border: none; outline: none; box-shadow: none; font-weight: bold; background: transparent; }
-  #exchangeTableWrapper { display: block; border: none; box-shadow: none; }
-  .history-controls { display:none !important; }
-}
-</style>
-</head>
-<body>
-
-<div id="loginScreen">
-  <div class="login-card">
-    <h2>🏦 金庫管理</h2>
-    <p>アカウントにログインしてください</p>
-    <div id="loginError"></div>
-
-    <div id="loginForm">
-      <label>メールアドレス</label>
-      <input type="email" id="loginEmail" placeholder="example@email.com" autocomplete="email">
-      <label>パスワード</label>
-      <input type="password" id="loginPassword" placeholder="パスワード" autocomplete="current-password">
-      <button class="btn-primary" onclick="doLogin()">ログイン</button>
-      <div class="login-divider">または</div>
-      <button class="btn-secondary" onclick="showRegister()">新規アカウント登録</button>
-    </div>
-
-    <div id="registerForm" style="display:none;">
-      <label>メールアドレス</label>
-      <input type="email" id="regEmail" placeholder="example@email.com" autocomplete="email">
-      <label>パスワード（6文字以上）</label>
-      <input type="password" id="regPassword" placeholder="パスワード" autocomplete="new-password">
-      <label>パスワード（確認）</label>
-      <input type="password" id="regPassword2" placeholder="パスワード（確認）" autocomplete="new-password">
-      <button class="btn-primary" onclick="doRegister()">登録する</button>
-      <div class="login-divider"></div>
-      <button class="btn-secondary" onclick="showLogin()">ログインに戻る</button>
-    </div>
-  </div>
-</div>
-
-<div id="subscriptionScreen">
-  <div class="sub-card">
-    <h2>🔒 プランの登録が必要です</h2>
-    <p>金庫管理システムをご利用いただくには、<br>サブスクリプションの登録が必要です。</p>
-    <button class="sub-btn" id="subscribeBtn" onclick="startSubscription()">プランに登録する</button>
-    <div style="margin-top: 20px;">
-      <button class="btn-secondary" onclick="doLogout()">ログアウト</button>
-    </div>
-  </div>
-</div>
-
-<div id="appScreen">
-  <div class="header-bar">
-    <div><strong>金庫管理</strong></div>
-    <div class="header-right">
-      <span class="sync-status" id="syncStatus"></span>
-      <span class="header-user" id="headerUser"></span>
-      <button id="settingBtn" class="logout-btn">設定・説明</button>
-      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
-    </div>
-  </div>
-
-  <div id="tourOverlay" class="tour-overlay"></div>
-  <div id="tourBubble" class="tour-bubble" style="display:none;">
-    <div id="tourMessage"></div>
-    <div class="tour-btn-group">
-      <button class="tour-btn" onclick="prevTour()">前へ</button>
-      <button class="tour-btn" onclick="nextTour()" id="tourNextBtn">次へ</button>
-      <button class="tour-btn" onclick="closeTour()">閉じる</button>
-    </div>
-  </div>
-
-  <div id="mainContainer" class="container">
-
-    <div id="settingPanel" class="modal-panel">
-      <div class="panel-header">
-        <h3>管理設定・説明</h3>
-        <span class="close-panel" onclick="closeSetting()" style="cursor:pointer; font-size:24px;">×</span>
-      </div>
-
-      <div class="help-section">
-        <div class="help-col">
-          <h4>1. 表示設定（不足時の扱い）</h4>
-          <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
-          <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
-          <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
-          <div><span class="help-tag" style="background:#bbb; color:white;">none</span> 【除外】入力欄を消し、計算からも外す</div>
-        </div>
-        <div class="help-col">
-          <h4>2. 「両替使用」チェック</h4>
-          <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
-          <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-            <b>💡 例：1,000円札（目標35枚）</b><br>
-            手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
-          </div>
-        </div>
-      </div>
-
-      <div class="security-section">
-        ☁️ 設定はクラウドに自動保存されます。どの端末からでも同じ設定でご利用いただけます。
-      </div>
-
-      <div id="guide-step-1" style="margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 8px;">
-        <label style="font-weight: bold;">金庫全体の目標総額: </label>
-        <input type="number" id="set-vault-total" style="font-size:18px; width:140px; font-weight:bold; color:#1e3799;"> 円
-      </div>
-
-      <div class="settings-tables-container">
-        <div class="settings-table-wrapper">
-          <h4>棒金の設定</h4>
-          <table style="width: 100%;">
-            <thead>
-              <tr>
-                <th>金額</th>
-                <th id="guide-step-2">1本の枚数</th>
-                <th id="guide-step-3" style="background:#3867d6;">目標(本)</th>
-                <th id="guide-step-4" style="background:#3867d6;">表示設定</th>
-                <th id="guide-step-5" style="background:#3867d6;">両替使用</th>
-              </tr>
-            </thead>
-            <tbody id="settingBarTbody"></tbody>
-          </table>
-        </div>
-        <div class="settings-table-wrapper" id="guide-step-6">
-          <h4>枚数の設定</h4>
-          <table style="width: 100%;">
-            <thead>
-              <tr>
-                <th>金額</th>
-                <th style="background:#4b7bec;">目標(枚)</th>
-                <th style="background:#4b7bec;">表示設定</th>
-                <th style="background:#4b7bec;">両替使用</th>
-              </tr>
-            </thead>
-            <tbody id="settingCoinTbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div style="text-align: right; margin-top: 25px;">
-        <button id="saveBtn" style="padding: 12px 40px; background: #2ed573; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:6px;">☁️ 設定をクラウドに保存</button>
-      </div>
-    </div>
-
-    <div class="tables-wrapper" id="tablesWrapper">
-      <div id="mainTableWrapper">
-        <table id="mainTable">
-          <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
-          <tbody id="inputBody"></tbody>
-          <tr class="total"><td>合計</td><td colspan="2"></td><td id="total">0</td></tr>
-          <tr><td>差額</td><td colspan="2"></td><td id="diff" class="diff-ok">0</td></tr>
-        </table>
-
-        <div class="action-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;">
-          <div style="position:relative; display:inline-block;">
-            <button id="othersBtn" style="padding:10px 15px; background:#747d8c; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;" onclick="const m = document.getElementById('othersMenu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex';">その他 ▼</button>
-            <div id="othersMenu" style="display:none; position:absolute; bottom:100%; right:0; margin-bottom:5px; background:white; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.2); padding:10px; flex-direction:column; gap:8px; z-index:1000; border:1px solid #dcdde1;">
-              <button id="printBtn" style="padding:10px 15px; background:#48dbfb; color:#222; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">印刷</button>
-              <button id="csvBtn" style="padding:10px 15px; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">CSV出力</button>
-              <button id="historyBtn" style="padding:10px 15px; background:#a29bfe; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">📋 履歴</button>
-            </div>
-          </div>
-          <button id="saveSnapshotBtn" style="padding:10px 15px; background:#fd9644; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">💾 保存</button>
-          <button id="resetBtn" style="padding:10px 15px; background:#ff7675; color:white; cursor:pointer; border:none; border-radius:6px;">クリア</button>
-        </div>
-
-        <div id="floatingContainer">
-          <div id="exchangeTableWrapper">
-            <table>
-              <thead><tr><th>金額</th><th>棒金差</th><th>枚数差</th></tr></thead>
-              <tbody id="exchangeBody"></tbody>
-              <tr class="total"><td colspan="2">使用可能金額（両替用）</td><td id="availableMoney" style="color:#0097e6;">0円</td></tr>
-              <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#eb4d4b;">0円</td></tr>
-            </table>
-          </div>
-          <button id="previewToggleBtn">非表示</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="historyOverlay">
-  <div id="historyPanel">
-    <h3>📋 過去の履歴</h3>
-    
-    <div class="history-controls">
-      <button class="history-tab-btn active" onclick="switchHistoryView('list')">リスト表示</button>
-      <button class="history-tab-btn" onclick="switchHistoryView('calendar')">カレンダー表示</button>
-      <button class="history-tab-btn" onclick="switchHistoryView('table')">テーブル表示</button>
-      <div style="margin-left:auto; display:flex; gap:8px;">
-        <button class="history-action-btn" id="historyPrintBtn" onclick="printHistory()">🖨️ 印刷</button>
-        <button class="history-action-btn" id="historyCsvBtn" onclick="exportHistoryCsv()">📊 CSV出力</button>
-        <button class="history-action-btn" id="historySelectDelBtn" style="display:none;" onclick="deleteSelectedHistory()">削除</button>
-        <button class="history-action-btn danger" id="historyDeleteAllBtn" style="display:none;" onclick="deleteAllHistory()">すべて削除</button>
-      </div>
-    </div>
-
-    <div id="historyListView" class="history-view active">
-      <div id="historyList"><p style="color:#aaa;text-align:center;">読み込み中...</p></div>
-    </div>
-
-    <div id="historyCalendarView" class="history-view">
-      <div id="historyCalendar"><p style="color:#aaa;text-align:center;">読み込み中...</p></div>
-    </div>
-
-    <div id="historyTableView" class="history-view history-table-view">
-      <table id="historyDataTable">
-        <thead>
-          <tr>
-            <th style="width:20px;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
-            <th>日時</th>
-            <th>合計</th>
-            <th>差額</th>
-            <th>補充必要額</th>
-            <th>メモ</th>
-          </tr>
-        </thead>
-        <tbody id="historyTableBody"></tbody>
-      </table>
-    </div>
-
-    <button class="history-close-btn" onclick="closeHistory()">閉じる</button>
-  </div>
-</div>
-
-<script>
-// ════════════════════════════════════════
-// Firebaseの設定
-// ════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyDyGmC0Bsx8m1WhMNKBwYwJEzJD-ZGOFf8",
-  authDomain: "kinko-23cf0.firebaseapp.com",
-  projectId: "kinko-23cf0",
-  storageBucket: "kinko-23cf0.firebasestorage.app",
-  messagingSenderId: "1459229783",
-  appId: "1:1459229783:web:e57ba867d7372ef70c3f12",
-  measurementId: "G-0KHWDKSYP6"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-// ════════════════════════════════════════
-// 認証UI制御
-// ════════════════════════════════════════
-function showLogin()    { document.getElementById('loginForm').style.display='block'; document.getElementById('registerForm').style.display='none'; document.getElementById('loginError').textContent=''; }
-function showRegister() { document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='block'; document.getElementById('loginError').textContent=''; }
-
-async function doLogin() {
-  const email    = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  document.getElementById('loginError').textContent = '';
   try {
-    await auth.signInWithEmailAndPassword(email, password);
-  } catch(e) {
-    document.getElementById('loginError').textContent = loginErrorMsg(e.code);
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error(`Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-}
 
-async function doRegister() {
-  const email = document.getElementById('regEmail').value.trim();
-  const pw1   = document.getElementById('regPassword').value;
-  const pw2   = document.getElementById('regPassword2').value;
-  document.getElementById('loginError').textContent = '';
-  if (pw1 !== pw2) { document.getElementById('loginError').textContent = 'パスワードが一致しません'; return; }
-  if (pw1.length < 6) { document.getElementById('loginError').textContent = 'パスワードは6文字以上にしてください'; return; }
-  try {
-    await auth.createUserWithEmailAndPassword(email, pw1);
-  } catch(e) {
-    document.getElementById('loginError').textContent = loginErrorMsg(e.code);
-  }
-}
-
-async function doLogout() {
-  await auth.signOut();
-}
-
-function loginErrorMsg(code) {
-  const map = {
-    'auth/invalid-email':       'メールアドレスの形式が正しくありません',
-    'auth/user-not-found':      'アカウントが見つかりません',
-    'auth/wrong-password':      'パスワードが違います',
-    'auth/invalid-credential':  'メールアドレスまたはパスワードが正しくありません',
-    'auth/email-already-in-use':'このメールアドレスはすでに登録されています',
-    'auth/too-many-requests':   'しばらく時間をおいてからお試しください',
-  };
-  return map[code] || 'エラーが発生しました: ' + code;
-}
-
-// ════════════════════════════════════════
-// ★ 変更: 認証状態の監視 → サブスクリプション状態のチェック
-// ════════════════════════════════════════
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('headerUser').textContent = user.email;
+  if (event.type === 'checkout.session.completed' || event.type === 'customer.subscription.updated') {
+    const sessionOrSub = event.data.object;
+    const customerId = sessionOrSub.customer;
     
-    // サブスク状態の確認
-    try {
-      const headers = await getAuthHeader();
-      const res = await fetch('/api/subscription/status', { headers });
-      const data = await res.json();
-
-      if (data.status === 'active') {
-        // 課金済み：アプリ画面を表示
-        document.getElementById('subscriptionScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display = 'block';
-        await loadConfigFromServer();
-        init();
-      } else {
-        // 未課金：サブスク案内画面を表示
-        document.getElementById('subscriptionScreen').style.display = 'flex';
-        document.getElementById('appScreen').style.display = 'none';
+    if (event.type === 'checkout.session.completed') {
+      const uid = sessionOrSub.client_reference_id; 
+      await db.collection('users').doc(uid).set({
+        stripeCustomerId: customerId,
+        subscriptionStatus: 'active',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } else {
+      const usersRef = db.collection('users');
+      const snapshot = await usersRef.where('stripeCustomerId', '==', customerId).get();
+      if (!snapshot.empty) {
+        snapshot.forEach(async doc => {
+          await doc.ref.update({
+            subscriptionStatus: sessionOrSub.status,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        });
       }
-    } catch(e) {
-      console.error("ステータス確認エラー:", e);
-      alert("アカウント情報の取得に失敗しました。");
     }
-  } else {
-    // 未ログイン
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('appScreen').style.display   = 'none';
-    if(document.getElementById('subscriptionScreen')) {
-      document.getElementById('subscriptionScreen').style.display = 'none';
+  }
+
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object;
+    const snapshot = await db.collection('users').where('stripeCustomerId', '==', subscription.customer).get();
+    if (!snapshot.empty) {
+      snapshot.forEach(async doc => await doc.ref.update({ subscriptionStatus: 'canceled' }));
     }
+  }
+
+  res.json({ received: true });
+});
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+async function authenticate(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: '認証トークンがありません' });
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.uid = decoded.uid;
+    req.email = decoded.email;
+    next();
+  } catch (e) {
+    return res.status(401).json({ error: '認証失敗: ' + e.message });
+  }
+}
+
+app.get('/api/subscription/status', authenticate, async (req, res) => {
+  try {
+    const doc = await db.collection('users').doc(req.uid).get();
+    if (!doc.exists) return res.json({ status: 'inactive' });
+    res.json({ status: doc.data().subscriptionStatus || 'inactive' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
-// ════════════════════════════════════════
-// サーバーAPIとの通信（Firebaseトークン付き）
-// ════════════════════════════════════════
-async function getAuthHeader() {
-  const token = await auth.currentUser.getIdToken();
-  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
-}
-
-async function saveConfigToServer() {
+app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
   try {
-    setSyncStatus('保存中...');
-    const headers = await getAuthHeader();
-    const res = await fetch('/api/config/save', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ config })
-    });
-    const data = await res.json();
-    setSyncStatus(data.ok ? '☁️ 保存完了' : '⚠️ 保存失敗');
-  } catch(e) {
-    setSyncStatus('⚠️ 保存失敗');
-  }
-  setTimeout(() => setSyncStatus(''), 3000);
-}
+    // 環境変数を使わず、確定したURLを直接書きます
+    const domainURL = 'https://kinko-app-final-4se3.onrender.com';
+    console.log("DEBUG: Forced domainURL is", domainURL); // ログに出るか確認
 
-async function loadConfigFromServer() {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      customer_email: req.email,
+      client_reference_id: req.uid,
+      line_items: [
+        {
+          price: process.env.STRIPE_PRICE_ID.trim(),
+          quantity: 1,
+        },
+      ],
+      success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${domainURL}/`,
+    });
+    res.json({ url: session.url });
+  } catch (e) {
+    console.error("Stripe Error Details:", e); // エラー詳細をログに出す
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/config/save', authenticate, async (req, res) => {
+  const { config } = req.body;
+  if (!config) return res.status(400).json({ error: 'configがありません' });
   try {
-    setSyncStatus('読み込み中...');
-    const headers = await getAuthHeader();
-    const res = await fetch('/api/config/load', { method: 'GET', headers });
-    const data = await res.json();
-    if (data.config) {
-      config = data.config;
-      setSyncStatus('☁️ 読み込み完了');
-    } else {
-      setSyncStatus('（初期設定を使用）');
-    }
-  } catch(e) {
-    setSyncStatus('⚠️ 読み込み失敗');
+    await db.collection('vaultConfigs').doc(req.uid).set({
+      config,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: '保存失敗: ' + e.message });
   }
-  setTimeout(() => setSyncStatus(''), 3000);
-}
+});
 
-function setSyncStatus(msg) {
-  document.getElementById('syncStatus').textContent = msg;
-}
-
-// ════════════════════════════════════════
-// ★ 追加: サブスクリプション決済画面への遷移処理
-// ════════════════════════════════════════
-async function startSubscription() {
-  const btn = document.getElementById('subscribeBtn');
-  btn.innerText = '準備中...';
-  btn.disabled = true;
-
+app.get('/api/config/load', authenticate, async (req, res) => {
   try {
-    const headers = await getAuthHeader();
-    const res = await fetch('/api/subscription/create-checkout', { 
-      method: 'POST', 
-      headers 
-    });
-    const data = await res.json();
-    
-    if (data.url) {
-      window.location.href = data.url; // Stripeの決済画面へリダイレクト
-    } else {
-      alert("決済画面の準備に失敗しました。");
-      btn.innerText = 'プランに登録する';
-      btn.disabled = false;
-    }
-  } catch(e) {
-    alert("エラーが発生しました: " + e.message);
-    btn.innerText = 'プランに登録する';
-    btn.disabled = false;
+    const doc = await db.collection('vaultConfigs').doc(req.uid).get();
+    if (!doc.exists) return res.json({ config: null });
+    res.json({ config: doc.data().config });
+  } catch (e) {
+    res.status(500).json({ error: '読み込み失敗: ' + e.message });
   }
-}
+});
 
-// ════════════════════════════════════════
-// 既存アプリのロジック（そのまま）
-// ════════════════════════════════════════
-const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
-const defaultSettings = {
-  vaultTotal: 100000, usePin: false, pin: "1234",
-  denoms: {
-    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: false },
-    100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-red", isAvailB: false, isAvailC: false },
-    50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    5:     { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false }
-  }
-};
-let config = JSON.parse(JSON.stringify(defaultSettings));
-let savedInputs = {};
-let currentHistoryData = [];
-let selectedHistoryIds = new Set();
-
-function init() {
-  const inputBody = document.getElementById("inputBody");
-  const exchangeBody = document.getElementById("exchangeBody");
-  const settingBarTbody = document.getElementById("settingBarTbody");
-  const settingCoinTbody = document.getElementById("settingCoinTbody");
-  inputBody.innerHTML = ""; exchangeBody.innerHTML = ""; settingBarTbody.innerHTML = ""; settingCoinTbody.innerHTML = "";
-  document.getElementById("set-vault-total").value = config.vaultTotal;
-
-  prices.forEach(p => {
-    const s = config.denoms[p];
-    const valB = savedInputs[p]?.b || "";
-    const valC = savedInputs[p]?.c || "";
-    const getCell = (mode, type, val) => {
-      if (mode === "none") return "";
-      if (mode === "hidden") return "-";
-      return `<input type="number" class="in-${type}" data-price="${p}" value="${val}">`;
-    };
-    inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode,"bar",valB)}</td><td>${getCell(s.cMode,"coin",valC)}</td><td id="sum-${p}">0</td></tr>`;
-    exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
-    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
-    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
-  });
-
-  document.querySelectorAll(".set-sync").forEach(el => {
-    el.addEventListener("input", (e) => {
-      const p = e.target.dataset.price; const key = e.target.dataset.key;
-      config.denoms[p][key] = e.target.type === "checkbox" ? e.target.checked : (e.target.type === "number" ? Number(e.target.value) : e.target.value);
-      calculate();
-    });
-    el.addEventListener("focus", (e) => highlightPreview(e.target.dataset.price, e.target.dataset.key));
-    el.addEventListener("blur", clearPreviewHighlight);
-  });
-
-  const vaultTotalIn = document.getElementById("set-vault-total");
-  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal = Number(e.target.value); calculate(); });
-  vaultTotalIn.addEventListener("focus", () => { document.getElementById("diff").classList.add("preview-highlight"); document.getElementById("needMoney").classList.add("preview-highlight"); });
-  vaultTotalIn.addEventListener("blur", clearPreviewHighlight);
-  calculate();
-}
-
-function highlightPreview(price, key) {
-  clearPreviewHighlight();
-  const mainRow = document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
-  const exRow   = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-  if(!mainRow || !exRow) return;
-  if (['perBar','tBar','bMode','isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
-  else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
-}
-function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight')); }
-
-function calculate() {
+app.post('/api/calculate', (req, res) => {
+  const { inputs, config } = req.body;
+  const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
   let currentTotal = 0, needMoney = 0, availableMoney = 0;
-  let currentInputs = {};
-  prices.forEach((price) => {
+  let results = {};
+
+  prices.forEach(price => {
     const s = config.denoms[price];
-    const bIn = document.querySelector(`.in-bar[data-price="${price}"]`);
-    const cIn = document.querySelector(`.in-coin[data-price="${price}"]`);
-    const barVal  = Number(bIn?.value || 0);
-    const coinVal = Number(cIn?.value || 0);
-    currentInputs[price] = { b: bIn?.value || "", c: cIn?.value || "" };
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
+    const barVal = Number(inputs[price]?.b || 0);
+    const coinVal = Number(inputs[price]?.c || 0);
     let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
     currentTotal += rowAmount;
-    document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
-    if (s.bMode === "hidden") bCell.innerText = "-";
-    else if (s.bMode !== "none") {
+    let bText = "-", bClass = "";
+    if (s.bMode !== "hidden" && s.bMode !== "none") {
       const dBar = barVal - s.tBar;
-      bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
-      let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-      bCell.className = bClass + (s.isAvailB ? ' avail-active' : '');
-      if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
-      if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
-    } else bCell.innerText = "-";
-    if (s.cMode === "hidden") cCell.innerText = "-";
-    else if (s.cMode !== "none") {
+      bText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
+      bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
+      if (dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
+      if (dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
+    }
+    let cText = "-", cClass = "";
+    if (s.cMode !== "hidden" && s.cMode !== "none") {
       const dCoin = coinVal - s.tCoin;
-      cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
-      let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-      cCell.className = cClass + (s.isAvailC ? ' avail-active' : '');
-      if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
-      if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
-    } else cCell.innerText = "-";
+      cText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
+      cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
+      if (dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
+      if (dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
+    }
+    results[price] = { rowAmount, bText, bClass, cText, cClass };
   });
-
-  const activeGrid = [];
-  prices.forEach((price) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    activeGrid.push([rowEx.children[1].classList.contains('avail-active'), rowEx.children[2].classList.contains('avail-active')]);
-  });
-  prices.forEach((price, rowIndex) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    const cells = [rowEx.children[1], rowEx.children[2]];
-    cells.forEach((cell, colIndex) => {
-      cell.classList.remove('edge-top','edge-bottom','edge-left','edge-right');
-      if (activeGrid[rowIndex][colIndex]) {
-        if (rowIndex === 0 || !activeGrid[rowIndex-1][colIndex]) cell.classList.add('edge-top');
-        if (rowIndex === prices.length-1 || !activeGrid[rowIndex+1][colIndex]) cell.classList.add('edge-bottom');
-        if (colIndex === 0 || !activeGrid[rowIndex][colIndex-1]) cell.classList.add('edge-left');
-        if (colIndex === 1 || !activeGrid[rowIndex][colIndex+1]) cell.classList.add('edge-right');
-      }
-    });
-  });
-
-  document.getElementById("total").innerText = currentTotal.toLocaleString();
   const diffVal = currentTotal - config.vaultTotal;
-  const dCell = document.getElementById("diff");
-  dCell.innerText = diffVal.toLocaleString();
-  dCell.className = (diffVal === 0) ? "diff-ok" : "diff-ng";
-  document.getElementById("needMoney").innerText    = needMoney.toLocaleString() + "円";
-  document.getElementById("availableMoney").innerText = availableMoney.toLocaleString() + "円";
-  savedInputs = currentInputs;
-}
-
-// ────── ツアー ──────
-let tourStep = 0;
-const tourSteps = [
-  { id: "guide-step-1", msg: "1. 目標総額\n金庫にあるべき最終的な合計金額を入力します。" },
-  { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
-  { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
-  { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
-  { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると、余剰分を「両替に使えるお金」として集計します。" },
-  { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
-  { id: "saveBtn",      msg: "7. 保存\n最後にここを押してクラウドへ保存してください。" }
-];
-function startTour() { tourStep = 0; document.getElementById("tourOverlay").style.display = "block"; showStep(); }
-function showStep() {
-  document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target"));
-  const step = tourSteps[tourStep]; const target = document.getElementById(step.id); const bubble = document.getElementById("tourBubble");
-  target.classList.add("highlight-target");
-  document.getElementById("tourMessage").innerText = `${tourStep+1} / ${tourSteps.length}\n${step.msg}`;
-  bubble.style.display = "block";
-  const rect = target.getBoundingClientRect(); const bubbleRect = bubble.getBoundingClientRect();
-  let topPos = rect.bottom + 15;
-  if (topPos + bubbleRect.height > window.innerHeight) topPos = rect.top - bubbleRect.height - 15;
-  let leftPos = rect.left;
-  if (leftPos + bubbleRect.width > window.innerWidth) leftPos = window.innerWidth - bubbleRect.width - 20;
-  bubble.style.top = (window.scrollY + topPos) + "px"; bubble.style.left = Math.max(10, leftPos) + "px";
-}
-function nextTour() { tourStep < tourSteps.length-1 ? (tourStep++, showStep()) : closeTour(); }
-function prevTour() { if (tourStep > 0) { tourStep--; showStep(); } }
-function closeTour() { document.getElementById("tourOverlay").style.display = "none"; document.getElementById("tourBubble").style.display = "none"; document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target")); }
-
-document.getElementById("settingBtn").addEventListener("click", () => {
-  document.getElementById("mainContainer").classList.add("setting-open");
-  document.getElementById("settingPanel").style.display = "block";
-  setTimeout(startTour, 300);
-});
-function closeSetting() {
-  const container = document.getElementById("mainContainer");
-  const el = document.getElementById("floatingContainer");
-  container.classList.remove("setting-open");
-  document.getElementById("settingPanel").style.display = "none";
-  el.style.position=""; el.style.top=""; el.style.left=""; el.style.bottom=""; el.style.right="";
-  clearPreviewHighlight(); closeTour();
-}
-function togglePreview() {
-  const wrapper = document.getElementById("exchangeTableWrapper");
-  const btn     = document.getElementById("previewToggleBtn");
-  const isHidden = wrapper.style.display === "none";
-  wrapper.style.display = isHidden ? "block" : "none";
-  btn.innerText = isHidden ? "非表示" : "表示";
-}
-
-document.getElementById("saveBtn").addEventListener("click", async () => {
-  config.vaultTotal = Number(document.getElementById("set-vault-total").value);
-  await saveConfigToServer();
-  closeSetting();
-  init();
+  res.json({ currentTotal, diffVal, needMoney, availableMoney, results });
 });
 
-// ════════════════════════════════════════
-// 履歴の保存・表示
-// ════════════════════════════════════════
-document.getElementById("saveSnapshotBtn").addEventListener("click", async () => {
-  const memo = prompt("メモを入力してください（省略可）") ?? "";
-  const total = document.getElementById("total").innerText;
-  const diff  = document.getElementById("diff").innerText;
-  const need  = document.getElementById("needMoney").innerText;
-  const snapshot = { inputs: savedInputs, total, diff, need, memo, savedAt: new Date().toISOString() };
+app.post('/api/history/save', authenticate, async (req, res) => {
+  const { snapshot } = req.body;
+  if (!snapshot) return res.status(400).json({ error: 'snapshotがありません' });
   try {
-    setSyncStatus('保存中...');
-    const headers = await getAuthHeader();
-    const res = await fetch('/api/history/save', { method:'POST', headers, body: JSON.stringify({ snapshot }) });
-    const data = await res.json();
-    setSyncStatus(data.ok ? '💾 保存完了' : '⚠️ 保存失敗');
-  } catch(e) { setSyncStatus('⚠️ 保存失敗'); }
-  setTimeout(() => setSyncStatus(''), 3000);
-});
-
-function switchHistoryView(view) {
-  document.querySelectorAll('.history-view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.history-tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('history' + view.charAt(0).toUpperCase() + view.slice(1) + 'View').classList.add('active');
-  event.target.classList.add('active');
-  
-  selectedHistoryIds.clear();
-  document.getElementById('selectAllCheckbox').checked = false;
-  updateHistoryButtonVisibility();
-}
-
-function updateHistoryButtonVisibility() {
-  const isTableView = document.getElementById('historyTableView').classList.contains('active');
-  document.getElementById('historySelectDelBtn').style.display = isTableView ? 'block' : 'none';
-  document.getElementById('historyDeleteAllBtn').style.display = isTableView ? 'block' : 'none';
-}
-
-document.getElementById("historyBtn").addEventListener("click", async () => {
-  document.getElementById("historyOverlay").style.display = 'flex';
-  document.getElementById("historyList").innerHTML = '<p style="color:#aaa;text-align:center;">読み込み中...</p>';
-  document.getElementById("historyCalendar").innerHTML = '<p style="color:#aaa;text-align:center;">読み込み中...</p>';
-  document.getElementById("historyTableBody").innerHTML = '';
-  selectedHistoryIds.clear();
-  updateHistoryButtonVisibility();
-
-  try {
-    const headers = await getAuthHeader();
-    const res = await fetch('/api/history/load', { method:'GET', headers });
-    const data = await res.json();
-    currentHistoryData = data.history || [];
-    
-    if (!currentHistoryData || currentHistoryData.length === 0) {
-      document.getElementById("historyList").innerHTML = '<p style="color:#aaa;text-align:center;">履歴がありません</p>';
-      document.getElementById("historyCalendar").innerHTML = '<p style="color:#aaa;text-align:center;">履歴がありません</p>';
-      document.getElementById("historyTableBody").innerHTML = '';
-      return;
-    }
-
-    renderHistoryList();
-    renderHistoryCalendar();
-    renderHistoryTable();
-  } catch(e) {
-    document.getElementById("historyList").innerHTML = '<p style="color:#eb4d4b;text-align:center;">読み込み失敗</p>';
-    document.getElementById("historyCalendar").innerHTML = '<p style="color:#eb4d4b;text-align:center;">読み込み失敗</p>';
+    await db.collection('vaultHistory').add({
+      uid: req.uid,
+      ...snapshot,
+      savedAt: snapshot.savedAt || new Date().toISOString()
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: '保存失敗: ' + e.message });
   }
 });
 
-function renderHistoryList() {
-  const list = document.getElementById("historyList");
-  list.innerHTML = currentHistoryData.map(h => {
-    const d = new Date(h.savedAt);
-    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div class="history-item">
-      <div class="history-item-info">
-        <div class="history-item-date">${dateStr}</div>
-        <div class="history-item-total">合計: ${h.total}円 差額: ${h.diff}円 補充: ${h.need}</div>
-        ${h.memo ? `<div class="history-item-memo">📝 ${h.memo}</div>` : ''}
-      </div>
-      <div class="history-item-btns">
-        <button class="history-del-btn" onclick="deleteHistory('${h.id}')">削除</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderHistoryCalendar() {
-  const historyByDate = {};
-  currentHistoryData.forEach(h => {
-    const d = new Date(h.savedAt);
-    const dateKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    if (!historyByDate[dateKey]) historyByDate[dateKey] = [];
-    historyByDate[dateKey].push(h);
-  });
-
-  const months = {};
-  Object.keys(historyByDate).forEach(dateKey => {
-    const [year, month] = dateKey.split('-');
-    const monthKey = `${year}-${month}`;
-    if (!months[monthKey]) months[monthKey] = {};
-    months[monthKey][dateKey] = historyByDate[dateKey];
-  });
-
-  let html = '';
-  Object.keys(months).sort().forEach(monthKey => {
-    const [year, month] = monthKey.split('-');
-    const d = new Date(year, month - 1);
-    const monthName = `${year}年${month}月`;
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
-    html += `<div class="calendar-month"><div class="calendar-header">${monthName}</div>`;
-    html += '<div class="calendar-grid">';
-    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-    dayNames.forEach(name => html += `<div class="calendar-day-name">${name}</div>`);
-    
-    const currentDate = new Date(startDate);
-    for (let i = 0; i < 42; i++) {
-      const dateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`;
-      const isCurrentMonth = currentDate.getMonth() === d.getMonth();
-      const hasHistory = months[monthKey][dateKey];
-      const dayHtml = `<div class="calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${hasHistory ? 'has-history' : ''}">
-        <div class="calendar-day-num">${currentDate.getDate()}</div>
-        ${hasHistory ? `<div class="calendar-day-count">${hasHistory.length}件</div>` : ''}
-      </div>`;
-      html += dayHtml;
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    html += '</div></div>';
-  });
-
-  document.getElementById("historyCalendar").innerHTML = html || '<p style="color:#aaa;text-align:center;">履歴がありません</p>';
-}
-
-function renderHistoryTable() {
-  const tbody = document.getElementById("historyTableBody");
-  tbody.innerHTML = currentHistoryData.map((h, idx) => {
-    const d = new Date(h.savedAt);
-    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<tr>
-      <td><input type="checkbox" class="history-row-checkbox" data-id="${h.id}" onchange="updateSelectedHistoryIds()"></td>
-      <td>${dateStr}</td>
-      <td>${h.total}円</td>
-      <td>${h.diff}円</td>
-      <td>${h.need}</td>
-      <td>${h.memo || '-'}</td>
-    </tr>`;
-  }).join('');
-}
-
-function updateSelectedHistoryIds() {
-  selectedHistoryIds.clear();
-  document.querySelectorAll('.history-row-checkbox:checked').forEach(checkbox => {
-    selectedHistoryIds.add(checkbox.dataset.id);
-  });
-}
-
-function toggleSelectAll() {
-  const isChecked = document.getElementById('selectAllCheckbox').checked;
-  document.querySelectorAll('.history-row-checkbox').forEach(checkbox => {
-    checkbox.checked = isChecked;
-  });
-  updateSelectedHistoryIds();
-}
-
-async function deleteHistory(id) {
-  if (!confirm("この履歴を削除しますか？")) return;
+app.get('/api/history/load', authenticate, async (req, res) => {
   try {
-    const headers = await getAuthHeader();
-    await fetch('/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id }) });
-    document.getElementById("historyBtn").click();
-  } catch(e) { alert("削除失敗"); }
-}
-
-async function deleteSelectedHistory() {
-  if (selectedHistoryIds.size === 0) { alert("削除する履歴を選択してください"); return; }
-  if (!confirm(`${selectedHistoryIds.size}件の履歴を削除しますか？`)) return;
-  try {
-    const headers = await getAuthHeader();
-    for (const id of selectedHistoryIds) {
-      await fetch('/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id }) });
-    }
-    document.getElementById("historyBtn").click();
-  } catch(e) { alert("削除失敗"); }
-}
-
-async function deleteAllHistory() {
-  if (!confirm("すべての履歴を削除しますか？\n(この操作は取り消せません)")) return;
-  try {
-    const headers = await getAuthHeader();
-    for (const h of currentHistoryData) {
-      await fetch('/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id: h.id }) });
-    }
-    document.getElementById("historyBtn").click();
-  } catch(e) { alert("削除失敗"); }
-}
-
-function printHistory() {
-  const printWindow = window.open('', '', 'width=800,height=600');
-  const tableHtml = document.getElementById('historyDataTable').outerHTML;
-  printWindow.document.write(`
-    <html><head><title>履歴</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 20px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-      th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-      th { background: #1e3799; color: white; }
-      tr:nth-child(even) { background: #f9f9f9; }
-      input[type="checkbox"] { display: none; }
-    </style>
-    </head><body>
-    <h2>金庫管理 - 履歴</h2>
-    <p>出力日時: ${new Date().toLocaleString()}</p>
-    ${tableHtml}
-    </body></html>
-  `);
-  printWindow.document.close();
-  printWindow.print();
-}
-
-function exportHistoryCsv() {
-  let csvContent = "data:text/csv;charset=utf-8,\uFEFF日時,合計,差額,補充必要額,メモ\n";
-  currentHistoryData.forEach(h => {
-    const d = new Date(h.savedAt);
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const memo = (h.memo || '').replace(/"/g, '""');
-    csvContent += `"${dateStr}","${h.total}","${h.diff}","${h.need}","${memo}"\n`;
-  });
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0,10);
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `金庫管理_履歴_${dateStr}.csv`);
-  document.body.appendChild(link); link.click(); document.body.removeChild(link);
-}
-
-function closeHistory() { 
-  document.getElementById("historyOverlay").style.display = 'none'; 
-  selectedHistoryIds.clear();
-}
-
-document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("数値をすべてクリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
-document.getElementById("inputBody").addEventListener("input", calculate);
-
-document.getElementById("printBtn").addEventListener("click", () => { window.print(); });
-
-document.getElementById("csvBtn").addEventListener("click", () => {
-  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-  csvContent += "金額,棒金(入力),枚数(入力),合計,棒金差,枚数差\n";
-  prices.forEach(p => {
-    const barIn  = document.querySelector(`.in-bar[data-price="${p}"]`);
-    const coinIn = document.querySelector(`.in-coin[data-price="${p}"]`);
-    const barVal  = barIn  ? barIn.value  : "";
-    const coinVal = coinIn ? coinIn.value : "";
-    const sumVal  = document.getElementById(`sum-${p}`).innerText.replace(/,/g, "");
-    const rowEx   = document.querySelector(`#exchangeBody tr[data-row-price="${p}"]`);
-    const dBar    = rowEx.children[1].innerText;
-    const dCoin   = rowEx.children[2].innerText;
-    csvContent += `${p},${barVal},${coinVal},${sumVal},${dBar},${dCoin}\n`;
-  });
-  const total     = document.getElementById("total").innerText.replace(/,/g, "");
-  const diff      = document.getElementById("diff").innerText.replace(/,/g, "");
-  const available = document.getElementById("availableMoney").innerText.replace(/,/g, "").replace("円","");
-  const need      = document.getElementById("needMoney").innerText.replace(/,/g, "").replace("円","");
-  csvContent += `\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n使用可能金額,,,${available}\n補充が必要な金額,,,${need}\n`;
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0,10);
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `金庫管理データ_${dateStr}.csv`);
-  document.body.appendChild(link); link.click(); document.body.removeChild(link);
-});
-
-// ドラッグ操作
-(function() {
-  const el = document.getElementById("floatingContainer");
-  const toggleBtn = document.getElementById("previewToggleBtn");
-  let isDragging = false, offsetX, offsetY, startX, startY, hasMoved = false;
-  const onStart = (e) => {
-    if (!document.getElementById("mainContainer").classList.contains("setting-open")) return;
-    if (e.target.closest('input, select, .close-panel')) return;
-    isDragging = true;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    startX = clientX; startY = clientY; hasMoved = false;
-    const rect = el.getBoundingClientRect();
-    offsetX = clientX - rect.left; offsetY = clientY - rect.top;
-    el.style.transition = "none"; el.style.bottom = "auto"; el.style.right = "auto";
-  };
-  const onMove = (e) => {
-    if (!isDragging) return;
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    if (Math.abs(clientX-startX) > 5 || Math.abs(clientY-startY) > 5) hasMoved = true;
-    el.style.left = (clientX-offsetX) + "px"; el.style.top = (clientY-offsetY) + "px";
-    if(e.cancelable) e.preventDefault();
-  };
-  const onEnd = () => { isDragging = false; el.style.transition = ""; };
-  el.addEventListener("mousedown", onStart); el.addEventListener("touchstart", onStart, {passive:false});
-  window.addEventListener("mousemove", onMove); window.addEventListener("touchmove", onMove, {passive:false});
-  window.addEventListener("mouseup", onEnd); window.addEventListener("touchend", onEnd);
-  toggleBtn.addEventListener("click", (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); return; } togglePreview(); });
-})();
-
-document.addEventListener('focusin', function(e) {
-  if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
-});
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-    e.preventDefault();
-    const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
-    const currentIndex = navRoute.indexOf(e.target);
-    if (currentIndex > -1) navRoute[(currentIndex+1) % navRoute.length].focus();
+    const snap = await db.collection('vaultHistory').where('uid', '==', req.uid).orderBy('savedAt', 'desc').limit(50).get();
+    const history = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json({ history });
+  } catch (e) {
+    res.status(500).json({ error: '読み込み失敗: ' + e.message });
   }
 });
 
-const originalInit = init;
-init = function() {
-  originalInit();
-  document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode','numeric'));
-};
-</script>
-</body>
-</html>
+app.post('/api/history/delete', authenticate, async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'idがありません' });
+  try {
+    const doc = await db.collection('vaultHistory').doc(id).get();
+    if (!doc.exists || doc.data().uid !== req.uid) return res.status(403).json({ error: '権限がありません' });
+    await db.collection('vaultHistory').doc(id).delete();
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: '削除失敗: ' + e.message });
+  }
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
+});
