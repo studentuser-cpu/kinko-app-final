@@ -18,40 +18,41 @@
 ════════════════════════════════════════ */
 #loginScreen {
   display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; background: #fff5f7; /* 可愛らしい背景色に変更 */
+  min-height: 100vh; background: #ffffff; /* 白に変更 */
 }
 .login-card {
   background: white; border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(255,141,161,0.15);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1); /* 黒系シャドウに変更 */
   padding: 40px 36px; width: 340px; max-width: 95vw;
+  border: 1px solid #000000; /* 黒枠に変更 */
 }
 .login-card h2 {
-  margin: 0 0 6px 0; color: #ff8da1; font-size: 22px; text-align: center;
+  margin: 0 0 6px 0; color: #000000; font-size: 22px; text-align: center; /* 黒に変更 */
 }
 .login-card p {
-  margin: 0 0 24px 0; color: #9ea2a8; font-size: 13px; text-align: center;
+  margin: 0 0 24px 0; color: #555555; font-size: 13px; text-align: center;
 }
-.login-card label { display: block; font-size: 13px; color: #594a4e; margin-bottom: 4px; font-weight: bold; }
+.login-card label { display: block; font-size: 13px; color: #000000; margin-bottom: 4px; font-weight: bold; }
 .login-card input[type="email"],
 .login-card input[type="password"] {
   width: 100%; box-sizing: border-box; padding: 10px 12px;
-  border: 1px solid #ced4da; border-radius: 6px; font-size: 14px;
+  border: 1px solid #000000; border-radius: 6px; font-size: 14px; /* 黒枠に変更 */
   margin-bottom: 16px; outline: none;
 }
-.login-card input:focus { border-color: #ff8da1; box-shadow: 0 0 0 3px rgba(255,141,161,0.2); }
+.login-card input:focus { border-color: #000000; box-shadow: 0 0 0 3px rgba(0,0,0,0.1); } /* 黒に変更 */
 .btn-primary {
-  width: 100%; padding: 12px; background: #ff8da1; color: white;
+  width: 100%; padding: 12px; background: #000000; color: white; /* 黒背景に変更 */
   border: none; border-radius: 6px; font-size: 15px; font-weight: bold;
   cursor: pointer; margin-bottom: 10px;
 }
-.btn-primary:hover { background: #ff768e; }
+.btn-primary:hover { background: #333333; } /* 濃いグレーに変更 */
 .btn-secondary {
-  width: 100%; padding: 10px; background: white; color: #ff8da1;
-  border: 1px solid #ff8da1; border-radius: 6px; font-size: 14px;
+  width: 100%; padding: 10px; background: white; color: #000000; /* 黒に変更 */
+  border: 1px solid #000000; border-radius: 6px; font-size: 14px;
   cursor: pointer;
 }
-.btn-secondary:hover { background: #fff0f3; }
-#loginError { color: #ff6b81; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; }
+.btn-secondary:hover { background: #eeeeee; } /* 薄いグレーに変更 */
+#loginError { color: #000000; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; font-weight: bold; }
 .login-divider { text-align: center; color: #aaa; margin: 12px 0; font-size: 12px; }
 
 /* ════════════════════════════════════════
@@ -59,108 +60,108 @@
 ════════════════════════════════════════ */
 #appScreen { display: none; }
 
-body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #fff5f7; padding: 0; margin: 0; color: #594a4e; }
-.header-bar { display: flex; justify-content: space-between; align-items: center; background: #ff8da1; color: white; padding: 10px 20px; box-shadow: 0 2px 5px rgba(255,141,161,0.2); }
+body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #ffffff; padding: 0; margin: 0; color: #000000; } /* 白背景・黒文字に変更 */
+.header-bar { display: flex; justify-content: space-between; align-items: center; background: #000000; color: white; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); } /* 黒背景に変更 */
 .header-right { display: flex; align-items: center; gap: 12px; }
 .header-user { font-size: 13px; opacity: 0.9; }
-.logout-btn { background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.8); color: white; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
-.logout-btn:hover { background: rgba(255,255,255,0.5); }
+.logout-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.8); color: white; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
+.logout-btn:hover { background: rgba(255,255,255,0.4); }
 .sync-status { font-size: 11px; opacity: 0.9; }
 
 .container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; max-width: 100vw; box-sizing: border-box; }
 .tables-wrapper { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; width: 100%; transition: all 0.3s ease; }
 
 #floatingContainer { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-#exchangeTableWrapper { background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,141,161,0.15); overflow: hidden; }
+#exchangeTableWrapper { background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #000000; } /* 黒枠・黒シャドウ */
 
 .container.setting-open #floatingContainer { position: fixed; bottom: 20px; right: 20px; z-index: 1001; cursor: grab; touch-action: none; }
-.container.setting-open #exchangeTableWrapper { background: rgba(255,255,255,0.98); border: 3px solid #ff8da1; padding: 10px; border-radius: 12px; box-shadow: 0 15px 50px rgba(255,141,161,0.3); zoom: 0.8; max-height: 60vh; overflow-y: auto; }
+.container.setting-open #exchangeTableWrapper { background: rgba(255,255,255,0.98); border: 3px solid #000000; padding: 10px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.15); zoom: 0.8; max-height: 60vh; overflow-y: auto; } /* 黒枠に変更 */
 .container.setting-open #floatingContainer:active { cursor: grabbing; }
-#previewToggleBtn { display: none; background: #ff8da1; color: white; border: 2px solid white; border-radius: 20px; padding: 6px 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(255,141,161,0.3); font-size: 12px; font-weight: bold; }
+#previewToggleBtn { display: none; background: #000000; color: white; border: 2px solid white; border-radius: 20px; padding: 6px 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 12px; font-weight: bold; } /* 黒に変更 */
 .container.setting-open #previewToggleBtn { display: block !important; }
 .container.setting-open #mainTableWrapper { display: none; }
 
 table { border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; white-space: nowrap; }
-td, th { border: 1px solid #ffe3e8; padding: 10px; text-align: center; min-width: 80px; transition: all 0.2s; }
-th { background: #ff8da1; color: white; font-size: 13px; }
-input[type="number"], input[type="text"], input[type="password"], select { text-align: center; font-size: 14px; border: 1px solid #ffe3e8; border-radius: 4px; padding: 3px; outline: none; }
-input[type="number"]:focus, select:focus { border-color: #ffdf73; box-shadow: 0 0 5px rgba(255,223,115,0.5); }
+td, th { border: 1px solid #000000; padding: 10px; text-align: center; min-width: 80px; transition: all 0.2s; } /* 黒枠に変更 */
+th { background: #000000; color: white; font-size: 13px; } /* 黒背景に変更 */
+input[type="number"], input[type="text"], input[type="password"], select { text-align: center; font-size: 14px; border: 1px solid #000000; border-radius: 4px; padding: 3px; outline: none; background: white; color: black; } /* 黒枠に変更 */
+input[type="number"]:focus, select:focus { border-color: #000000; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
 input[type="number"] { width: 65px; }
-.total { font-weight: bold; background: #fff0f3; }
-.diff-ok { color: #594a4e; }
-.diff-ng { color: #ff6b81; font-weight: bold; }
-.need { background: #fff3b0; font-weight: bold; }
-.txt-minus { color: #ff6b81; font-weight: bold; }
-.txt-plus  { color: #70a1ff; font-weight: bold; }
-.txt-ok    { color: #594a4e; font-weight: bold; }
-.bg-red    { background-color: #ffe0e6; }
-.bg-yellow { background-color: #fff3b0; }
-.bg-ok     { background-color: #f7f9fc; }
-.modal-panel { display: none; background: #fff; border-radius: 12px; border: 1px solid #ffe3e8; padding: 25px; z-index: 1000; box-shadow: 0 20px 50px rgba(255,141,161,0.2); width: 1100px; max-width: 98%; margin-bottom: 40px; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #fff0f3; padding-bottom: 10px; }
-.help-section { background: #fff0f3; border: 1px solid #ffe3e8; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; }
+.total { font-weight: bold; background: #eeeeee; } /* 薄いグレーに変更 */
+.diff-ok { color: #000000; }
+.diff-ng { color: #000000; font-weight: bold; text-decoration: underline; } /* 黒太字・下線に変更 */
+.need { background: #e0e0e0; font-weight: bold; } /* グレーに変更 */
+.txt-minus { color: #000000; font-weight: bold; }
+.txt-plus  { color: #000000; font-weight: bold; text-decoration: underline; } /* 黒に変更 */
+.txt-ok    { color: #000000; font-weight: bold; }
+.bg-red    { background-color: #e0e0e0; } /* グレーに変更 */
+.bg-yellow { background-color: #f5f5f5; } /* 薄いグレーに変更 */
+.bg-ok     { background-color: #ffffff; } /* 白に変更 */
+.modal-panel { display: none; background: #fff; border-radius: 12px; border: 1px solid #000000; padding: 25px; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 1100px; max-width: 98%; margin-bottom: 40px; } /* 黒枠に変更 */
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #000000; padding-bottom: 10px; } /* 黒線に変更 */
+.help-section { background: #f5f5f5; border: 1px solid #000000; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px; color: black; } /* グレーに変更 */
 @media(min-width: 768px) { .help-section { flex-direction: row; } }
 .help-col { flex: 1; font-size: 13px; line-height: 1.6; }
-.help-col h4 { margin: 0 0 8px 0; color: #ff8da1; border-bottom: 2px solid #ff8da1; display: inline-block; }
-.help-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; width: 36px; text-align: center; margin-right: 5px; }
-.security-section { background: #fff8e1; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
-.tour-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2000; pointer-events: none; }
-.tour-bubble { position: absolute; background: #ff8da1; color: white; padding: 15px; border-radius: 8px; box-shadow: 0 10px 25px rgba(255,141,161,0.4); z-index: 2001; width: 260px; font-size: 14px; pointer-events: auto; white-space: pre-wrap; line-height: 1.5; }
+.help-col h4 { margin: 0 0 8px 0; color: #000000; border-bottom: 2px solid #000000; display: inline-block; } /* 黒に変更 */
+.help-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; width: 36px; text-align: center; margin-right: 5px; border: 1px solid #000000; }
+.security-section { background: #f9f9f9; border: 1px solid #000000; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: black; } /* グレー・黒枠に変更 */
+.tour-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; pointer-events: none; }
+.tour-bubble { position: absolute; background: #000000; color: white; padding: 15px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 2001; width: 260px; font-size: 14px; pointer-events: auto; white-space: pre-wrap; line-height: 1.5; } /* 黒背景に変更 */
 .tour-btn-group { display: flex; justify-content: space-between; margin-top: 10px; }
-.tour-btn { background: rgba(255,255,255,0.3); border: 1px solid white; color: white; padding: 3px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
-.highlight-target { outline: 6px solid #ffdf73 !important; outline-offset: 2px; position: relative; z-index: 2001 !important; }
-.preview-highlight { box-shadow: inset 0 0 0 3px #ff6b81; background-color: rgba(255,223,115,0.3) !important; position: relative; }
+.tour-btn { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 3px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
+.highlight-target { outline: 6px solid #000000 !important; outline-offset: 2px; position: relative; z-index: 2001 !important; } /* 黒に変更 */
+.preview-highlight { box-shadow: inset 0 0 0 3px #000000; background-color: rgba(0,0,0,0.05) !important; position: relative; } /* 黒に変更 */
 .settings-tables-container { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
-.settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #ffe3e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(255,141,161,0.1); }
-.settings-table-wrapper h4 { margin-top: 0; color: #ff8da1; display: flex; align-items: center; gap: 8px; }
-td.avail-active { background-color: #e3f2fd !important; }
-td.edge-top { border-top: 2px solid #594a4e !important; }
-td.edge-bottom { border-bottom: 2px solid #594a4e !important; }
-td.edge-left { border-left: 2px solid #594a4e !important; }
-td.edge-right { border-right: 2px solid #594a4e !important; }
+.settings-table-wrapper { flex: 1; min-width: 320px; overflow-x: auto; background: #fff; border: 1px solid #000000; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); } /* 黒枠に変更 */
+.settings-table-wrapper h4 { margin-top: 0; color: #000000; display: flex; align-items: center; gap: 8px; } /* 黒に変更 */
+td.avail-active { background-color: #eeeeee !important; } /* 薄いグレーに変更 */
+td.edge-top { border-top: 2px solid #000000 !important; }
+td.edge-bottom { border-bottom: 2px solid #000000 !important; }
+td.edge-left { border-left: 2px solid #000000 !important; }
+td.edge-right { border-right: 2px solid #000000 !important; }
 
 /* 履歴パネル追加スタイル */
-#historyOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:3000; align-items:center; justify-content:center; }
-#historyPanel { background:white; border-radius:12px; padding:25px; width:650px; max-width:95vw; height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(255,141,161,0.3); }
-#historyPanel h3 { margin:0 0 15px 0; color:#ff8da1; }
+#historyOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000; align-items:center; justify-content:center; }
+#historyPanel { background:white; border-radius:12px; padding:25px; width:650px; max-width:95vw; height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,0.2); border: 1px solid #000000; } /* 黒枠に変更 */
+#historyPanel h3 { margin:0 0 15px 0; color:#000000; } /* 黒に変更 */
 
 .history-controls { display:flex; justify-content:space-between; margin-bottom:15px; flex-wrap:wrap; gap:10px; }
-.cute-btn { background: white; color: #ff8da1; border: 2px solid #ff8da1; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; }
-.cute-btn:hover, .cute-btn.active { background: #ff8da1; color: white; }
-.select-del-btn { border-color: #ffb8b8; color: #ffb8b8; }
-.select-del-btn:hover { background: #ffb8b8; color: white; }
-.bulk-del-btn { border-color: #ff6b81; color: #ff6b81; }
-.bulk-del-btn:hover { background: #ff6b81; color: white; }
+.cute-btn { background: white; color: #000000; border: 2px solid #000000; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; } /* 黒に変更 */
+.cute-btn:hover, .cute-btn.active { background: #000000; color: white; } /* 黒に変更 */
+.select-del-btn { border-color: #666666; color: #666666; } /* グレーに変更 */
+.select-del-btn:hover { background: #666666; color: white; }
+.bulk-del-btn { border-color: #000000; color: #000000; } /* 黒に変更 */
+.bulk-del-btn:hover { background: #000000; color: white; }
 
 .history-view-container { flex:1; overflow-y:auto; overflow-x:hidden; }
-.history-item { border:1px solid #ffe3e8; border-radius:8px; padding:12px 15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap: 10px; }
-.hist-chk { width: 18px; height: 18px; accent-color: #ff8da1; cursor: pointer; }
+.history-item { border:1px solid #000000; border-radius:8px; padding:12px 15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap: 10px; color: black; } /* 黒枠に変更 */
+.hist-chk { width: 18px; height: 18px; accent-color: #000000; cursor: pointer; } /* 黒に変更 */
 .history-item-info { flex:1; }
-.history-item-date { font-size:13px; color:#9ea2a8; }
-.history-item-total { font-size:16px; font-weight:bold; color:#ff8da1; }
-.history-item-memo { font-size:12px; color:#594a4e; margin-top:3px; }
-.history-del-btn { background:#ff6b81; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:12px; }
-.history-close-btn { background:#fff0f3; color:#ff8da1; border:1px solid #ff8da1; border-radius:20px; padding:8px 20px; cursor:pointer; font-size:14px; margin-top:15px; align-self:flex-end; font-weight:bold; }
+.history-item-date { font-size:13px; color:#555555; }
+.history-item-total { font-size:16px; font-weight:bold; color:#000000; } /* 黒に変更 */
+.history-item-memo { font-size:12px; color:#000000; margin-top:3px; }
+.history-del-btn { background:#000000; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:12px; } /* 黒に変更 */
+.history-close-btn { background:#ffffff; color:#000000; border:1px solid #000000; border-radius:20px; padding:8px 20px; cursor:pointer; font-size:14px; font-weight:bold; } /* 黒白に変更 */
 
 /* カレンダー表示スタイル */
-.cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-weight:bold; color: #594a4e; font-size:16px; }
-.cal-header button { background: none; border: none; cursor: pointer; font-size: 18px; color: #ff8da1; }
+.cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-weight:bold; color: #000000; font-size:16px; }
+.cal-header button { background: none; border: none; cursor: pointer; font-size: 18px; color: #000000; } /* 黒に変更 */
 .cal-grid { display:grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align:center; }
-.cal-day-head { font-size:12px; color: #ff8da1; font-weight:bold; padding-bottom:5px; }
-.cal-cell { border: 1px solid #ffe3e8; border-radius:6px; min-height: 50px; display:flex; flex-direction:column; align-items:center; justify-content:center; background: #fff; cursor:default; position:relative; }
-.cal-cell.has-data { cursor:pointer; background: #fff0f3; border-color: #ffb6c1; }
-.cal-cell.has-data:hover { background: #ffe3e8; }
-.cal-date { font-size:14px; color: #594a4e; }
-.cal-badge { font-size:10px; background: #ff8da1; color: white; padding: 2px 6px; border-radius: 10px; margin-top: 4px; }
-#calDayDetails { margin-top: 20px; border-top: 2px dashed #ffe3e8; padding-top: 15px; }
+.cal-day-head { font-size:12px; color: #000000; font-weight:bold; padding-bottom:5px; } /* 黒に変更 */
+.cal-cell { border: 1px solid #000000; border-radius:6px; min-height: 50px; display:flex; flex-direction:column; align-items:center; justify-content:center; background: #fff; cursor:default; position:relative; color: black; } /* 黒枠に変更 */
+.cal-cell.has-data { cursor:pointer; background: #eeeeee; border-color: #000000; } /* グレー背景・黒枠に変更 */
+.cal-cell.has-data:hover { background: #dddddd; }
+.cal-date { font-size:14px; color: #000000; }
+.cal-badge { font-size:10px; background: #000000; color: white; padding: 2px 6px; border-radius: 10px; margin-top: 4px; } /* 黒背景に変更 */
+#calDayDetails { margin-top: 20px; border-top: 2px dashed #000000; padding-top: 15px; } /* 黒線に変更 */
 
 @media print {
   body { background: white; -webkit-user-select: auto; user-select: auto; }
   .header-bar, #tourOverlay, #tourBubble, .modal-panel, #floatingContainer, .action-buttons, #historyOverlay { display: none !important; }
   .container { padding: 0; gap: 10px; }
   .tables-wrapper { display: block; }
-  table { border: 1px solid #ccc; box-shadow: none; margin-bottom: 20px; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
-  td, th { padding: 8px; border: 1px solid #ccc; color: black !important; background: white !important;}
+  table { border: 1px solid #000; box-shadow: none; margin-bottom: 20px; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
+  td, th { padding: 8px; border: 1px solid #000; color: black !important; background: white !important;}
   input[type="number"] { border: none; outline: none; box-shadow: none; font-weight: bold; background: transparent; }
   #exchangeTableWrapper { display: block; border: none; box-shadow: none; }
 }
@@ -232,7 +233,7 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
     <div id="settingPanel" class="modal-panel">
       <div class="panel-header">
         <h3>管理設定・説明</h3>
-        <span class="close-panel" onclick="closeSetting()" style="cursor:pointer; font-size:24px; color:#ff8da1;">×</span>
+        <span class="close-panel" onclick="closeSetting()" style="cursor:pointer; font-size:24px; color:#000000;">×</span>
       </div>
 
       <div class="help-section">
@@ -245,8 +246,8 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
         </div>
         <div class="help-col">
           <h4>2. 「両替使用」チェック</h4>
-          <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#70a1ff;">【使用可能金額】</b>に加算します。</div>
-          <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #ffe3e8;">
+          <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#000000; text-decoration: underline;">【使用可能金額】</b>に加算します。</div>
+          <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #000000;">
             <b>💡 例：1,000円札（目標35枚）</b><br>
             手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
           </div>
@@ -257,9 +258,9 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
         ☁️ 設定はクラウドに自動保存されます。どの端末からでも同じ設定でご利用いただけます。
       </div>
 
-      <div id="guide-step-1" style="margin-bottom: 20px; background: #fff0f3; padding: 15px; border-radius: 8px;">
+      <div id="guide-step-1" style="margin-bottom: 20px; background: #f5f5f5; padding: 15px; border-radius: 8px;">
         <label style="font-weight: bold;">金庫全体の目標総額: </label>
-        <input type="number" id="set-vault-total" style="font-size:18px; width:140px; font-weight:bold; color:#ff8da1;"> 円
+        <input type="number" id="set-vault-total" style="font-size:18px; width:140px; font-weight:bold; color:#000000;"> 円
       </div>
 
       <div class="settings-tables-container">
@@ -270,9 +271,9 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
               <tr>
                 <th>金額</th>
                 <th id="guide-step-2">1本の枚数</th>
-                <th id="guide-step-3" style="background:#ff9eb5;">目標(本)</th>
-                <th id="guide-step-4" style="background:#ff9eb5;">表示設定</th>
-                <th id="guide-step-5" style="background:#ff9eb5;">両替使用</th>
+                <th id="guide-step-3" style="background:#333333;">目標(本)</th>
+                <th id="guide-step-4" style="background:#333333;">表示設定</th>
+                <th id="guide-step-5" style="background:#333333;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingBarTbody"></tbody>
@@ -284,9 +285,9 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
             <thead>
               <tr>
                 <th>金額</th>
-                <th style="background:#ffaec0;">目標(枚)</th>
-                <th style="background:#ffaec0;">表示設定</th>
-                <th style="background:#ffaec0;">両替使用</th>
+                <th style="background:#333333;">目標(枚)</th>
+                <th style="background:#333333;">表示設定</th>
+                <th style="background:#333333;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingCoinTbody"></tbody>
@@ -295,7 +296,7 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
       </div>
 
       <div style="text-align: right; margin-top: 25px;">
-        <button id="saveBtn" style="padding: 12px 40px; background: #ff9eb5; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:20px;">☁️ 設定をクラウドに保存</button>
+        <button id="saveBtn" style="padding: 12px 40px; background: #000000; color: white; font-size: 16px; cursor:pointer; font-weight:bold; border:none; border-radius:20px;">☁️ 設定をクラウドに保存</button>
       </div>
     </div>
 
@@ -311,15 +312,15 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
         <!-- アクションボタン群 -->
         <div class="action-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; flex-wrap:wrap;">
           <div style="position:relative; display:inline-block;">
-            <button id="othersBtn" style="padding:10px 15px; background:#fbc531; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;" onclick="const m = document.getElementById('othersMenu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex';">その他 ▼</button>
-            <div id="othersMenu" style="display:none; position:absolute; bottom:100%; right:0; margin-bottom:5px; background:white; border-radius:8px; box-shadow:0 4px 15px rgba(255,141,161,0.2); padding:10px; flex-direction:column; gap:8px; z-index:1000; border:1px solid #ffe3e8;">
-              <button id="printBtn" style="padding:10px 15px; background:#48dbfb; color:#222; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">印刷</button>
-              <button id="csvBtn" style="padding:10px 15px; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">CSV出力</button>
-              <button id="historyBtn" style="padding:10px 15px; background:#a29bfe; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">📋 履歴</button>
+            <button id="othersBtn" style="padding:10px 15px; background:#000000; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;" onclick="const m = document.getElementById('othersMenu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex';">その他 ▼</button>
+            <div id="othersMenu" style="display:none; position:absolute; bottom:100%; right:0; margin-bottom:5px; background:white; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); padding:10px; flex-direction:column; gap:8px; z-index:1000; border:1px solid #000000;">
+              <button id="printBtn" style="padding:10px 15px; background:#333333; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">印刷</button>
+              <button id="csvBtn" style="padding:10px 15px; background:#333333; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">CSV出力</button>
+              <button id="historyBtn" style="padding:10px 15px; background:#333333; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px; white-space:nowrap; width:100%; text-align:center;" onclick="document.getElementById('othersMenu').style.display='none';">📋 履歴</button>
             </div>
           </div>
-          <button id="saveSnapshotBtn" style="padding:10px 15px; background:#fd9644; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">💾 保存</button>
-          <button id="resetBtn" style="padding:10px 15px; background:#ff7675; color:white; cursor:pointer; border:none; border-radius:6px;">クリア</button>
+          <button id="saveSnapshotBtn" style="padding:10px 15px; background:#000000; color:white; font-weight:bold; cursor:pointer; border:none; border-radius:6px;">💾 保存</button>
+          <button id="resetBtn" style="padding:10px 15px; background:#333333; color:white; cursor:pointer; border:none; border-radius:6px;">クリア</button>
         </div>
       </div>
 
@@ -328,8 +329,8 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
           <table>
             <thead><tr><th>金額</th><th>棒金差</th><th>枚数差</th></tr></thead>
             <tbody id="exchangeBody"></tbody>
-            <tr class="total"><td colspan="2">使用可能金額（両替用）</td><td id="availableMoney" style="color:#70a1ff;">0円</td></tr>
-            <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#ff6b81;">0円</td></tr>
+            <tr class="total"><td colspan="2">使用可能金額（両替用）</td><td id="availableMoney" style="color:#000000; font-weight: bold; text-decoration: underline;">0円</td></tr>
+            <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#000000; font-weight: bold;">0円</td></tr>
           </table>
         </div>
         <button id="previewToggleBtn">非表示</button>
@@ -360,7 +361,12 @@ td.edge-right { border-right: 2px solid #594a4e !important; }
     <!-- カレンダー表示用 -->
     <div id="historyCalendar" class="history-view-container" style="display:none;"></div>
 
-    <button class="history-close-btn" onclick="closeHistory()">閉じる</button>
+    <!-- 履歴の下部アクションエリア（印刷、CSV出力、閉じる） -->
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px; align-items:center;">
+      <button class="cute-btn" id="historyPrintBtn" onclick="printHistory()">印刷</button>
+      <button class="cute-btn" id="historyCsvBtn" onclick="exportHistoryToCsv()">CSV出力</button>
+      <button class="history-close-btn" onclick="closeHistory()">閉じる</button>
+    </div>
   </div>
 </div>
 
@@ -528,10 +534,10 @@ function init() {
       if (mode === "hidden") return "-";
       return `<input type="number" class="in-${type}" data-price="${p}" value="${val}">`;
     };
-    inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#fff0f3; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode,"bar",valB)}</td><td>${getCell(s.cMode,"coin",valC)}</td><td id="sum-${p}">0</td></tr>`;
-    exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#fff0f3;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
-    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#fff0f3;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
-    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#fff0f3;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
+    inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#eeeeee; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode,"bar",valB)}</td><td>${getCell(s.cMode,"coin",valC)}</td><td id="sum-${p}">0</td></tr>`;
+    exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#eeeeee;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
+    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#eeeeee;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
+    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#eeeeee;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
   });
 
   document.querySelectorAll(".set-sync").forEach(el => {
@@ -683,7 +689,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 });
 
 // ════════════════════════════════════════
-// ★ 履歴・カレンダー機能（追加・修正部分）
+// ★ 履歴・カレンダー機能
 // ════════════════════════════════════════
 let globalHistory = [];
 let currentHistView = 'list';
@@ -715,7 +721,7 @@ document.getElementById("historyBtn").addEventListener("click", async () => {
     globalHistory = data.history || [];
     renderHistory();
   } catch(e) { 
-    document.getElementById("historyList").innerHTML = '<p style="color:#ff6b81;text-align:center;">読み込み失敗</p>'; 
+    document.getElementById("historyList").innerHTML = '<p style="color:#000000;text-align:center;font-weight:bold;">読み込み失敗</p>'; 
   }
 });
 
@@ -819,7 +825,7 @@ window.showCalDayDetails = function(d) {
       <button class="history-del-btn" onclick="deleteHistory('${h.id}')">削除</button>
     </div>`;
   }).join('');
-  document.getElementById('calDayDetails').innerHTML = `<h4 style="color:#ff8da1; margin-top:0;">${m+1}月${d}日の履歴</h4>` + detailHtml;
+  document.getElementById('calDayDetails').innerHTML = `<h4 style="color:#000000; margin-top:0;">${m+1}月${d}日の履歴</h4>` + detailHtml;
 };
 
 // 削除アクション群
@@ -863,6 +869,43 @@ window.deleteAllHistory = async function() {
 };
 
 function closeHistory() { document.getElementById("historyOverlay").style.display = 'none'; }
+
+// ★ 履歴画面用 印刷処理
+window.printHistory = function() {
+  const view = currentHistView;
+  let content = "";
+  if (view === 'list') {
+    content = document.getElementById("historyList").innerHTML;
+  } else {
+    const calClone = document.getElementById("historyCalendar").cloneNode(true);
+    const btns = calClone.querySelectorAll(".cal-header button");
+    btns.forEach(b => b.style.display = "none");
+    content = calClone.innerHTML;
+  }
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write('<html><head><title>履歴印刷</title><style>body{font-family:sans-serif;padding:20px;color:#000;background:#fff;} .history-item{border:1px solid #000; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;} .history-del-btn, .hist-chk{display:none;} .cal-header{text-align:center; font-weight:bold; font-size:18px; margin-bottom:15px;} .cal-grid{display:grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align:center;} .cal-day-head{font-weight:bold;} .cal-cell{border:1px solid #000; min-height:50px; display:flex; flex-direction:column; align-items:center; justify-content:center;} #calDayDetails{margin-top:20px; border-top:1px dashed #000; padding-top:15px;}</style></head><body><h3>📋 過去の履歴</h3>' + content + '</body></html>');
+  printWindow.document.close();
+  printWindow.print();
+};
+
+// ★ 履歴画面用 CSV出力処理
+window.exportHistoryToCsv = function() {
+  if (globalHistory.length === 0) { alert("出力する履歴がありません"); return; }
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+  csvContent += "日時,合計,差額,補充が必要な金額,メモ\n";
+  globalHistory.forEach(h => {
+    const d = new Date(h.savedAt);
+    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const memo = h.memo ? h.memo.replace(/"/g, '""') : "";
+    csvContent += `"${dateStr}","${h.total}","${h.diff}","${h.need}","${memo}"\n`;
+  });
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0,10);
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `金庫管理_過去履歴データ_${dateStr}.csv`);
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+};
 
 document.getElementById("resetBtn").addEventListener("click", () => { if (confirm("数値をすべてクリアしますか？")) { document.querySelectorAll("#mainTable input").forEach(i => i.value = ""); calculate(); } });
 document.getElementById("inputBody").addEventListener("input", calculate);
