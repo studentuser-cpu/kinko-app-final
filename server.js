@@ -93,9 +93,9 @@ app.get('/api/subscription/status', authenticate, async (req, res) => {
 
 app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
   try {
-    // ここで環境変数の CLIENT_URL を読み込みます。設定がなければローカルをデフォルトにします
-    const domainURL = process.env.CLIENT_URL || 'http://localhost:3000';
-    console.log("DEBUG: domainURL is", domainURL);
+    // 環境変数を使わず、確定したURLを直接書きます
+    const domainURL = 'https://kinko-app-final-4se3.onrender.com';
+    console.log("DEBUG: Forced domainURL is", domainURL); // ログに出るか確認
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -108,12 +108,12 @@ app.post('/api/subscription/create-checkout', authenticate, async (req, res) => 
           quantity: 1,
         },
       ],
-      // ここで動的にURLを指定
       success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${domainURL}/`,
     });
     res.json({ url: session.url });
   } catch (e) {
+    console.error("Stripe Error Details:", e); // エラー詳細をログに出す
     res.status(500).json({ error: e.message });
   }
 });
