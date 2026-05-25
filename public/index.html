@@ -514,7 +514,7 @@ auth.onAuthStateChanged(async (user) => {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('loginError').innerHTML = '<span style="color:#1e3799; font-weight:bold; font-size:15px;">サーバーと通信しています...;
+    document.getElementById('loginError').innerHTML = '<span style="color:#1e3799; font-weight:bold; font-size:15px;">サーバーと通信しています...<br>（最大50秒ほどかかる場合があります）</span>';
     
     try {
       const headers = await getAuthHeader();
