@@ -508,7 +508,8 @@ auth.onAuthStateChanged(async (user) => {
       }
     } catch(e) {
       console.error("ステータス確認エラー:", e);
-      alert("アカウント情報の取得に失敗しました。");
+      document.getElementById('subscriptionScreen').style.display = 'flex';
+      document.getElementById('appScreen').style.display = 'none';
     }
   } else {
     // 未ログイン
