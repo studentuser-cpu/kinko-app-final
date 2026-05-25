@@ -8,7 +8,6 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // ════════════════════════════════════════
 // 起動時に環境変数チェック
-//    必須の環境変数が未設定の場合、起動直後に明確なエラーで停止させます
 // ════════════════════════════════════════
 const requiredEnvVars = [
   'STRIPE_SECRET_KEY',
@@ -26,19 +25,15 @@ for (const key of requiredEnvVars) {
 const app = express();
 
 // ════════════════════════════════════════
-// ★ セキュリティ強化: Helmet の導入
-//    各種セキュリティヘッダーを自動設定し、脆弱性からアプリを保護します。
-//    フロントエンドの外部リソース（Stripe, Firebase等）の読み込みを阻害しないよう
-//    CSP（Content Security Policy）はオフに調整しています。
+// セキュリティ強化: Helmet の導入
+// フロントエンドの動作（FirebaseやStripe）を妨げないセーフ設定です
 // ════════════════════════════════════════
 app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
 // ════════════════════════════════════════
-// ★ セキュリティ強化: CORS 設定の適正化
-//    全てのオリジンを許可（*）するのではなく、環境変数 APP_URL をベースに
-//    信頼できるオリジンのみに制限して、クロスサイトリクエストによる悪意ある操作を防ぎます。
+// セキュリティ強化: CORS設定
 // ════════════════════════════════════════
 const domainURL = process.env.APP_URL || 'https://kinko-app-final-4se3.onrender.com';
 const allowedOrigins = [
@@ -49,12 +44,11 @@ const allowedOrigins = [
 ];
 app.use(cors({
   origin: function (origin, callback) {
-    // 同一オリジンからのリクエストや、ツール等からのoriginがないリクエストは許可
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1 || !process.env.APP_URL) {
       return callback(null, true);
     } else {
-      return callback(new Error('CORS Policy: このオリジンからのアクセスは許可されていません。'), false);
+      return callback(new Error('CORS Policy Error'), false);
     }
   }
 }));
@@ -69,9 +63,7 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // ════════════════════════════════════════
-// Stripe Webhook
-// ★ 重要: express.raw() は必ず express.json() より先に定義すること
-//    Stripeの署名検証はraw bodyが必要なため
+// Stripe Webhook (JSONパースの前に配置)
 // ════════════════════════════════════════
 app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -81,7 +73,6 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
 
   let event;
 
-  // Stripeの署名を検証（リクエストが本当にStripeから来たものか確認）
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
@@ -89,9 +80,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // ── イベント種別ごとの処理 ──
   try {
-    // Case 1: Checkoutセッション完了 または サブスクリプション更新
     if (
       event.type === 'checkout.session.completed' ||
       event.type === 'customer.subscription.updated'
@@ -130,7 +119,6 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
       }
     }
 
-    // Case 2: サブスクリプション削除（解約確定）
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object;
       const snapshot = await db.collection('users')
@@ -150,7 +138,6 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
       }
     }
 
-    // Case 3: 支払い失敗
     if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object;
       const snapshot = await db.collection('users')
@@ -176,29 +163,23 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
 });
 
 // ════════════════════════════════════════
-// 通常のJSONリクエスト処理（Webhookの後に配置）
+// 通常のJSONリクエスト処理
 // ════════════════════════════════════════
 app.use(express.json());
 
-// ════════════════════════════════════════
-// ★ セキュリティ強化: レート制限（Rate Limiting）の導入
-//    ブルートフォース攻撃やDoS（サービス拒否）攻撃からAPIエンドポイントを保護します。
-//    ※ 大量のリクエストが送られてくる可能性のあるWebhookへの影響を防ぐため、この位置に適用しています。
-// ════════════════════════════════════════
+// セキュリティ強化: APIへの過剰リクエスト（DoS・ブルートフォース）制限
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分間
-  max: 200, // 各IPで15分間に最大200リクエストまで許可
-  standardHeaders: true, // レート制限情報を `RateLimit-*` ヘッダーに含める
-  legacyHeaders: false, // 旧式の `X-RateLimit-*` ヘッダーを非表示にする
+  windowMs: 15 * 60 * 1000, // 15分
+  max: 300, // 最大300リクエストまで
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'リクエストが多すぎます。しばらく時間をおいてから再度お試しください。' }
 });
 app.use('/api/', apiLimiter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ════════════════════════════════════════
 // ミドルウェア：Firebaseトークン認証
-// ════════════════════════════════════════
 async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace('Bearer ', '');
@@ -209,7 +190,7 @@ async function authenticate(req, res, next) {
     req.email = decoded.email;
     next();
   } catch (e) {
-    return res.status(401).json({ error: '認証失敗: ' + e.message });
+    return res.status(401).json({ error: '認証失敗' });
   }
 }
 
@@ -222,8 +203,8 @@ app.get('/api/subscription/status', authenticate, async (req, res) => {
     if (!doc.exists) return res.json({ status: 'inactive' });
     res.json({ status: doc.data().subscriptionStatus || 'inactive' });
   } catch (e) {
-    console.error('サブスク状態確認エラー詳細:', e);
-    res.status(500).json({ error: 'サーバー内部エラーが発生しました' });
+    console.error('エラー:', e);
+    res.status(500).json({ error: 'サーバーエラーが発生しました' });
   }
 });
 
@@ -251,8 +232,8 @@ app.post('/api/subscription/create-checkout', authenticate, async (req, res) => 
 
     res.json({ url: session.url });
   } catch (e) {
-    console.error('Stripe Checkoutセッション作成エラー詳細:', e);
-    res.status(500).json({ error: '決済セッションの作成に失敗しました' });
+    console.error('Stripeエラー:', e);
+    res.status(500).json({ error: '決済処理の開始に失敗しました' });
   }
 });
 
@@ -269,8 +250,8 @@ app.post('/api/config/save', authenticate, async (req, res) => {
     });
     res.json({ ok: true });
   } catch (e) {
-    console.error('設定保存エラー詳細:', e);
-    res.status(500).json({ error: '設定の保存に失敗しました' });
+    console.error('エラー:', e);
+    res.status(500).json({ error: '保存に失敗しました' });
   }
 });
 
@@ -283,22 +264,19 @@ app.get('/api/config/load', authenticate, async (req, res) => {
     if (!doc.exists) return res.json({ config: null });
     res.json({ config: doc.data().config });
   } catch (e) {
-    console.error('設定読み込みエラー詳細:', e);
-    res.status(500).json({ error: '設定の読み込みに失敗しました' });
+    console.error('エラー:', e);
+    res.status(500).json({ error: '読み込みに失敗しました' });
   }
 });
 
 // ════════════════════════════════════════
 // API: 計算ロジック
-// ★ セキュリティ・堅牢性強化: 予期せぬ入力データ（ハッキング行為など）によるクラッシュ防止を追加
 // ════════════════════════════════════════
 app.post('/api/calculate', (req, res) => {
   try {
     const { inputs, config } = req.body;
-    
-    // 入力データの存在チェック (不正なペイロードによるサーバー強制終了を完全回避)
     if (!inputs || !config || !config.denoms) {
-      return res.status(400).json({ error: '入力データまたは設定が不足しています' });
+      return res.status(400).json({ error: '必要なデータが不足しています' });
     }
 
     const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
@@ -307,7 +285,7 @@ app.post('/api/calculate', (req, res) => {
 
     prices.forEach(price => {
       const s = config.denoms[price];
-      if (!s) return; // 特定の金種設定が欠落している場合は安全にスキップ
+      if (!s) return;
 
       const barVal = Number(inputs[price]?.b || 0);
       const coinVal = Number(inputs[price]?.c || 0);
@@ -337,7 +315,7 @@ app.post('/api/calculate', (req, res) => {
     const diffVal = currentTotal - (config.vaultTotal || 0);
     res.json({ currentTotal, diffVal, needMoney, availableMoney, results });
   } catch (e) {
-    console.error('計算処理エラー詳細:', e);
+    console.error('エラー:', e);
     res.status(500).json({ error: '計算処理中にエラーが発生しました' });
   }
 });
@@ -356,13 +334,13 @@ app.post('/api/history/save', authenticate, async (req, res) => {
     });
     res.json({ ok: true });
   } catch (e) {
-    console.error('履歴保存エラー詳細:', e);
+    console.error('エラー:', e);
     res.status(500).json({ error: '履歴の保存に失敗しました' });
   }
 });
 
 // ════════════════════════════════════════
-// API: 履歴を取得（新しい順・最大50件）
+// API: 履歴を取得
 // ════════════════════════════════════════
 app.get('/api/history/load', authenticate, async (req, res) => {
   try {
@@ -374,8 +352,8 @@ app.get('/api/history/load', authenticate, async (req, res) => {
     const history = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json({ history });
   } catch (e) {
-    console.error('履歴読み込みエラー詳細:', e);
-    res.status(500).json({ error: '履歴の読み込みに失敗しました' });
+    console.error('エラー:', e);
+    res.status(500).json({ error: '履歴の取得に失敗しました' });
   }
 });
 
@@ -391,7 +369,7 @@ app.post('/api/history/delete', authenticate, async (req, res) => {
     await db.collection('vaultHistory').doc(id).delete();
     res.json({ ok: true });
   } catch (e) {
-    console.error('履歴削除エラー詳細:', e);
+    console.error('エラー:', e);
     res.status(500).json({ error: '履歴の削除に失敗しました' });
   }
 });
@@ -409,5 +387,4 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`サーバー起動完了: ポート ${PORT}`);
-  console.log(`Stripe設定: ${process.env.STRIPE_SECRET_KEY ? '✓' : '✗'}`);
 });
