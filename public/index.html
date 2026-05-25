@@ -41,20 +41,21 @@
 .btn-primary {
   width: 100%; padding: 12px; background: #1e3799; color: white;
   border: none; border-radius: 6px; font-size: 15px; font-weight: bold;
-  cursor: pointer; margin-bottom: 10px;
+  cursor: pointer; margin-bottom: 10px; transition: background 0.2s;
 }
-.btn-primary:hover { background: #3867d6; }
+.btn-primary:hover:not(:disabled) { background: #3867d6; }
+.btn-primary:disabled { background: #a4b0be; cursor: not-allowed; }
 .btn-secondary {
   width: 100%; padding: 10px; background: white; color: #1e3799;
   border: 1px solid #1e3799; border-radius: 6px; font-size: 14px;
   cursor: pointer;
 }
-.btn-secondary:hover { background: #eef2f7; }
-#loginError { color: #eb4d4b; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; }
+.btn-secondary:hover:not(:disabled) { background: #eef2f7; }
+#loginError { color: #eb4d4b; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; line-height: 1.4; }
 .login-divider { text-align: center; color: #aaa; margin: 12px 0; font-size: 12px; }
 
 /* ════════════════════════════════════════
-   ★ 追加: サブスクリプション画面
+   サブスクリプション画面
 ════════════════════════════════════════ */
 #subscriptionScreen {
   display: none; align-items: center; justify-content: center;
@@ -73,7 +74,7 @@
 .sub-btn:hover { background: #26b360; }
 
 /* ════════════════════════════════════════
-   メインアプリ（既存スタイルそのまま）
+   メインアプリ
 ════════════════════════════════════════ */
 #appScreen { display: none; }
 
@@ -210,7 +211,7 @@ td.edge-right { border-right: 2px solid black !important; }
       <input type="email" id="loginEmail" placeholder="example@email.com" autocomplete="email">
       <label>パスワード</label>
       <input type="password" id="loginPassword" placeholder="パスワード" autocomplete="current-password">
-      <button class="btn-primary" onclick="doLogin()">ログイン</button>
+      <button class="btn-primary" id="loginSubmitBtn" onclick="doLogin()">ログイン</button>
       <div class="login-divider">または</div>
       <button class="btn-secondary" onclick="showRegister()">新規アカウント登録</button>
     </div>
@@ -376,9 +377,9 @@ td.edge-right { border-right: 2px solid black !important; }
     <h3>📋 過去の履歴</h3>
     
     <div class="history-controls">
-      <button class="history-tab-btn active" onclick="switchHistoryView('list')">リスト表示</button>
-      <button class="history-tab-btn" onclick="switchHistoryView('calendar')">カレンダー表示</button>
-      <button class="history-tab-btn" onclick="switchHistoryView('table')">テーブル表示</button>
+      <button class="history-tab-btn active" onclick="switchHistoryView('list', this)">リスト表示</button>
+      <button class="history-tab-btn" onclick="switchHistoryView('calendar', this)">カレンダー表示</button>
+      <button class="history-tab-btn" onclick="switchHistoryView('table', this)">テーブル表示</button>
       <div style="margin-left:auto; display:flex; gap:8px;">
         <button class="history-action-btn" id="historyPrintBtn" onclick="printHistory()">🖨️ 印刷</button>
         <button class="history-action-btn" id="historyCsvBtn" onclick="exportHistoryCsv()">📊 CSV出力</button>
@@ -435,6 +436,19 @@ const auth = firebase.auth();
 const BASE_URL = 'https://kinko-app-final-4se3.onrender.com';
 
 // ════════════════════════════════════════
+// セキュリティ用：HTML特殊文字のエスケープ関数
+// ════════════════════════════════════════
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ════════════════════════════════════════
 // 認証UI制御
 // ════════════════════════════════════════
 function showLogin()    { document.getElementById('loginForm').style.display='block'; document.getElementById('registerForm').style.display='none'; document.getElementById('loginError').textContent=''; }
@@ -443,11 +457,19 @@ function showRegister() { document.getElementById('loginForm').style.display='no
 async function doLogin() {
   const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginSubmitBtn');
+  
   document.getElementById('loginError').textContent = '';
+  // ★ボタンの連続押し防止と視覚的フィードバック
+  btn.disabled = true;
+  btn.innerText = 'ログイン処理中...';
+  
   try {
     await auth.signInWithEmailAndPassword(email, password);
   } catch(e) {
     document.getElementById('loginError').textContent = loginErrorMsg(e.code);
+    btn.disabled = false;
+    btn.innerText = 'ログイン';
   }
 }
 
@@ -482,37 +504,54 @@ function loginErrorMsg(code) {
 }
 
 // ════════════════════════════════════════
-// ★ 変更: 認証状態の監視 → サブスクリプション状態のチェック
+// 認証状態の監視 → サブスクリプション状態のチェック
 // ════════════════════════════════════════
 auth.onAuthStateChanged(async (user) => {
   if (user) {
-    document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('headerUser').textContent = user.email;
     
-    // サブスク状態の確認
+    // ★UI改善: サーバー通信中は画面を消さず、カード内に「確認中」を明記する
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('loginError').innerHTML = '<span style="color:#1e3799; font-weight:bold; font-size:15px;">サーバーと通信しています...<br>（最大50秒ほどかかる場合があります）</span>';
+    
     try {
       const headers = await getAuthHeader();
       const res = await fetch(BASE_URL + '/api/subscription/status', { headers });
+      
+      if (!res.ok) throw new Error('Network error');
       const data = await res.json();
 
       if (data.status === 'active') {
         // 課金済み：アプリ画面を表示
+        document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('subscriptionScreen').style.display = 'none';
         document.getElementById('appScreen').style.display = 'block';
         await loadConfigFromServer();
         init();
       } else {
         // 未課金：サブスク案内画面を表示
+        document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('subscriptionScreen').style.display = 'flex';
         document.getElementById('appScreen').style.display = 'none';
       }
     } catch(e) {
       console.error("ステータス確認エラー:", e);
-document.getElementById('subscriptionScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.display = 'none';
+      // サーバーが落ちている場合は再読み込みかログアウトを促す
+      document.getElementById('loginError').innerHTML = `
+        <span style="color:#eb4d4b; font-weight:bold;">サーバーとの接続に失敗しました。</span><br>
+        <span style="font-size:12px; color:#666;">時間を置いてから再度お試しください。</span><br>
+        <button class="btn-secondary" style="margin-top:15px;" onclick="location.reload()">画面を更新</button>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="doLogout()">ログアウトして戻る</button>
+      `;
     }
   } else {
-    // 未ログイン
+    // 未ログイン状態のUIリセット
+    const btn = document.getElementById('loginSubmitBtn');
+    if(btn) { btn.disabled = false; btn.innerText = 'ログイン'; }
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('loginError').innerHTML = '';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('appScreen').style.display   = 'none';
     if(document.getElementById('subscriptionScreen')) {
@@ -569,7 +608,7 @@ function setSyncStatus(msg) {
 }
 
 // ════════════════════════════════════════
-// ★ 追加: サブスクリプション決済画面への遷移処理
+// サブスクリプション決済画面への遷移処理
 // ════════════════════════════════════════
 async function startSubscription() {
   const btn = document.getElementById('subscribeBtn');
@@ -585,7 +624,7 @@ async function startSubscription() {
     const data = await res.json();
     
     if (data.url) {
-      window.location.href = data.url; // Stripeの決済画面へリダイレクト
+      window.location.href = data.url; 
     } else {
       alert("決済画面の準備に失敗しました。");
       btn.innerText = 'プランに登録する';
@@ -599,7 +638,7 @@ async function startSubscription() {
 }
 
 // ════════════════════════════════════════
-// 既存アプリのロジック（そのまま）
+// 既存アプリのロジック
 // ════════════════════════════════════════
 const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
@@ -620,15 +659,6 @@ let config = JSON.parse(JSON.stringify(defaultSettings));
 let savedInputs = {};
 let currentHistoryData = [];
 let selectedHistoryIds = new Set();
-   
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 
 function init() {
   const inputBody = document.getElementById("inputBody");
@@ -820,11 +850,12 @@ document.getElementById("saveSnapshotBtn").addEventListener("click", async () =>
   setTimeout(() => setSyncStatus(''), 3000);
 });
 
-function switchHistoryView(view) {
+// ★修正: switchHistoryView の引数を修正
+function switchHistoryView(view, btnElement) {
   document.querySelectorAll('.history-view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.history-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('history' + view.charAt(0).toUpperCase() + view.slice(1) + 'View').classList.add('active');
-  event.target.classList.add('active');
+  if(btnElement) btnElement.classList.add('active');
   
   selectedHistoryIds.clear();
   document.getElementById('selectAllCheckbox').checked = false;
@@ -876,7 +907,7 @@ function renderHistoryList() {
       <div class="history-item-info">
         <div class="history-item-date">${dateStr}</div>
         <div class="history-item-total">合計: ${h.total}円 差額: ${h.diff}円 補充: ${h.need}</div>
-        ${h.memo ? `<div class="history-item-memo">📝 ${h.memo}</div>` : ''}
+        ${h.memo ? `<div class="history-item-memo">📝 ${escapeHtml(h.memo)}</div>` : ''}
       </div>
       <div class="history-item-btns">
         <button class="history-del-btn" onclick="deleteHistory('${h.id}')">削除</button>
@@ -946,7 +977,7 @@ function renderHistoryTable() {
       <td>${h.total}円</td>
       <td>${h.diff}円</td>
       <td>${h.need}</td>
-      <td>${h.memo || '-'}</td>
+      <td>${escapeHtml(h.memo || '-')}</td>
     </tr>`;
   }).join('');
 }
@@ -1108,12 +1139,26 @@ document.getElementById("csvBtn").addEventListener("click", () => {
 document.addEventListener('focusin', function(e) {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
 });
+
+// ★修正: ログイン時のエンターキー誤作動をブロックし、正常にエンターでログインできるようにしました
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-    e.preventDefault();
-    const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
-    const currentIndex = navRoute.indexOf(e.target);
-    if (currentIndex > -1) navRoute[(currentIndex+1) % navRoute.length].focus();
+  if (e.key === 'Enter') {
+    // ログイン画面にいる場合はログインボタンを押す
+    if (document.getElementById('loginScreen').style.display !== 'none') {
+      if (e.target.id === 'loginEmail' || e.target.id === 'loginPassword') {
+        e.preventDefault();
+        doLogin();
+        return;
+      }
+    }
+    
+    // 金庫アプリの画面にいる場合のカーソル移動
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+      e.preventDefault();
+      const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
+      const currentIndex = navRoute.indexOf(e.target);
+      if (currentIndex > -1) navRoute[(currentIndex+1) % navRoute.length].focus();
+    }
   }
 });
 
