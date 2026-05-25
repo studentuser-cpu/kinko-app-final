@@ -508,8 +508,8 @@ auth.onAuthStateChanged(async (user) => {
       }
     } catch(e) {
       console.error("ステータス確認エラー:", e);
-      document.getElementById('subscriptionScreen').style.display = 'flex';
-      document.getElementById('appScreen').style.display = 'none';
+document.getElementById('subscriptionScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
     }
   } else {
     // 未ログイン
