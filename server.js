@@ -228,6 +228,12 @@ async function authenticate(req, res, next) {
   if (!token) return res.status(401).json({ error: '認証トークンがありません' });
   try {
     const decoded = await admin.auth().verifyIdToken(token);
+
+    // 【追加】認証トークン内のメールアドレスがGmailドメインであるか厳密にチェック
+    if (!decoded.email || !decoded.email.endsWith('@gmail.com')) {
+      return res.status(401).json({ error: '許可されていないメールアドレスです。正規のGmailのみアクセス可能です。' });
+    }
+
     req.uid = decoded.uid;
     req.email = decoded.email;
     next();
