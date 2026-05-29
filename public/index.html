@@ -298,7 +298,7 @@ td.edge-right { border-right: 2px solid black !important; }
       </div>
 
       <div class="settings-tables-container">
-        <div class="settings-table-wrapper">
+        <div class="settings-tables-wrapper">
           <h4>棒金の設定</h4>
           <table style="width: 100%;">
             <thead>
@@ -460,6 +460,13 @@ async function doLogin() {
   const btn = document.getElementById('loginSubmitBtn');
   
   document.getElementById('loginError').textContent = '';
+
+  // 【追加】Gmail以外のドメインによるログイン制限
+  if (!email.endsWith('@gmail.com')) {
+    document.getElementById('loginError').textContent = '正規のGmailアドレス（@gmail.com）のみログイン可能です。';
+    return;
+  }
+
   // ★ボタンの連続押し防止と視覚的フィードバック
   btn.disabled = true;
   btn.innerText = 'ログイン処理中...';
@@ -478,6 +485,13 @@ async function doRegister() {
   const pw1   = document.getElementById('regPassword').value;
   const pw2   = document.getElementById('regPassword2').value;
   document.getElementById('loginError').textContent = '';
+
+  // 【追加】Gmail以外のドメインによる新規登録制限
+  if (!email.endsWith('@gmail.com')) {
+    document.getElementById('loginError').textContent = '正規のGmailアドレス（@gmail.com）のみ登録可能です。';
+    return;
+  }
+
   if (pw1 !== pw2) { document.getElementById('loginError').textContent = 'パスワードが一致しません'; return; }
   if (pw1.length < 6) { document.getElementById('loginError').textContent = 'パスワードは6文字以上にしてください'; return; }
   try {
