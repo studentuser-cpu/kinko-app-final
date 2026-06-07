@@ -6,40 +6,36 @@ const rateLimit = require('express-rate-limit');
 const admin = require('firebase-admin');
 
 // ════════════════════════════════════════
-// 起動時に環境変数チェック（※強制終了を解除）
+// 起動時に環境変数チェック
 // ════════════════════════════════════════
 const requiredEnvVars = [
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_PRICE_ID',
   'FIREBASE_SERVICE_ACCOUNT'
 ];
 for (const key of requiredEnvVars) {
   if (!process.env[key]) {
-    // 以前は process.exit(1) で強制終了していましたが、サーバーダウンを防ぐため警告ログのみに変更
-    console.warn(`⚠️ 警告: 環境変数 "${key}" が設定されていません。一部機能が動作しない可能性があります。`);
+    console.warn(`⚠️ 警告: 環境変数 "${key}" が設定されていません。データベース機能が動作しない可能性があります。`);
   }
 }
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'dummy_key_to_prevent_crash');
 const app = express();
 
 // ════════════════════════════════════════
-// 【対策3】セキュリティ強化: Helmet の導入（HTTPヘッダー保護）
+// セキュリティ強化: Helmet の導入
 // ════════════════════════════════════════
 app.use(helmet({
-  contentSecurityPolicy: false, // StripeやFirebaseの外部スクリプト読み込みを許可
+  contentSecurityPolicy: false,
 }));
 
 // ════════════════════════════════════════
-// 【対策3】セキュリティ強化: CORS設定の適正化
+// CORS設定の適正化
 // ════════════════════════════════════════
 const domainURL = process.env.APP_URL || 'https://kinko-app-final-4se3.onrender.com';
 const allowedOrigins = [
   domainURL,
   'http://localhost:3000',
   'http://localhost:5000',
-  'http://localhost:10000'
+  'http://localhost:10000',
+  'https://r-w-kinko.github.io' // ← もしGitHub Pagesをお使いなら自分のURLを追加してください
 ];
 app.use(cors({
   origin: function (origin, callback) {
@@ -53,7 +49,7 @@ app.use(cors({
 }));
 
 // ════════════════════════════════════════
-// 【対策1】管理者画面APIの保護・アカウントロック機能
+// 管理者画面APIの保護・アカウントロック機能
 // ════════════════════════════════════════
 const adminLoginAttempts = new Map();
 const ALLOWED_ADMIN_IPS = process.env.ALLOWED_ADMIN_IPS ? process.env.ALLOWED_ADMIN_IPS.split(',') : [];
@@ -88,7 +84,7 @@ app.use('/api/admin', (req, res, next) => {
   } else {
     attempts.count += 1;
     if (attempts.count >= 10) {
-      attempts.lockUntil = Date.now() + 15 * 60 * 1000; // 10回失敗で15分ロック
+      attempts.lockUntil = Date.now() + 15 * 60 * 1000;
     }
     adminLoginAttempts.set(clientIp, attempts);
     res.setHeader('WWW-Authenticate', 'Basic realm="Admin Area"');
@@ -96,22 +92,8 @@ app.use('/api/admin', (req, res, next) => {
   }
 });
 
-// セキュリティ審査提出用のダミーエンドポイント
 app.get('/api/admin/status', (req, res) => {
   res.json({ status: 'secure', message: '管理者アクセス制限・ロック機能稼働中' });
-});
-
-// ════════════════════════════════════════
-// 【対策2】アップロードファイル拡張子の厳密な制限
-// ════════════════════════════════════════
-app.post('/api/upload-check', express.raw({ type: '*/*', limit: '2mb' }), (req, res) => {
-  const fileName = req.headers['x-file-name'] || '';
-  const allowedExtensions = ['.csv', '.json', '.txt'];
-  const ext = path.extname(fileName).toLowerCase();
-  if (!allowedExtensions.includes(ext)) {
-    return res.status(400).json({ error: '許可されていないファイル拡張子です。' });
-  }
-  res.json({ success: true });
 });
 
 // ════════════════════════════════════════
@@ -130,87 +112,10 @@ try {
   console.warn("⚠️ Firebaseの初期化に失敗しました。環境変数を確認してください。");
 }
 
-// ════════════════════════════════════════
-// Stripe Webhook (JSONパースより先に実行)
-// ════════════════════════════════════════
-app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ? process.env.STRIPE_WEBHOOK_SECRET.trim() : undefined;
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    console.error(`Webhook署名検証エラー: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
-    if (event.type === 'checkout.session.completed' || event.type === 'customer.subscription.updated') {
-      const sessionOrSub = event.data.object;
-      const customerId = sessionOrSub.customer;
-
-      if (event.type === 'checkout.session.completed') {
-        const uid = sessionOrSub.client_reference_id;
-        if (uid && db) {
-          await db.collection('users').doc(uid).set({
-            stripeCustomerId: customerId,
-            subscriptionStatus: 'active',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-        }
-      } else if (db) {
-        const snapshot = await db.collection('users').where('stripeCustomerId', '==', customerId).get();
-        if (!snapshot.empty) {
-          for (const doc of snapshot.docs) {
-            await doc.ref.update({
-              subscriptionStatus: sessionOrSub.status,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-          }
-        }
-      }
-    }
-
-    if (event.type === 'customer.subscription.deleted' && db) {
-      const subscription = event.data.object;
-      const snapshot = await db.collection('users').where('stripeCustomerId', '==', subscription.customer).get();
-      if (!snapshot.empty) {
-        for (const doc of snapshot.docs) {
-          await doc.ref.update({
-            subscriptionStatus: 'canceled',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      }
-    }
-
-    if (event.type === 'invoice.payment_failed' && db) {
-      const invoice = event.data.object;
-      const snapshot = await db.collection('users').where('stripeCustomerId', '==', invoice.customer).get();
-      if (!snapshot.empty) {
-        for (const doc of snapshot.docs) {
-          await doc.ref.update({
-            subscriptionStatus: 'past_due',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Webhook処理エラー:', e.message);
-  }
-
-  res.json({ received: true });
-});
-
-// ════════════════════════════════════════
-// 通常のエンドポイントに対するJSONパース
-// ════════════════════════════════════════
 app.use(express.json());
 
 // ════════════════════════════════════════
-// 【対策6】不正ログイン・DoS攻撃対策（レート制限）
+// 不正ログイン・DoS攻撃対策（レート制限）
 // ════════════════════════════════════════
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -221,67 +126,18 @@ app.use('/api/', apiLimiter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Firebase認証ミドルウェア
-async function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ error: '認証トークンがありません' });
-  try {
-    const decoded = await admin.auth().verifyIdToken(token);
-
-    // 【追加】認証トークン内のメールアドレスがGmailドメインであるか厳密にチェック
-    if (!decoded.email || !decoded.email.endsWith('@gmail.com')) {
-      return res.status(401).json({ error: '許可されていないメールアドレスです。正規のGmailのみアクセス可能です。' });
-    }
-
-    req.uid = decoded.uid;
-    req.email = decoded.email;
-    next();
-  } catch (e) {
-    return res.status(401).json({ error: '認証失敗' });
-  }
-}
+// ★ ログイン機能を外したため、すべてのユーザーで共有する固定のデータ領域を使用します
+const DEFAULT_UID = 'shared_vault';
 
 // ════════════════════════════════════════
-// APIルート群（エラー文のサニタイズ適用済み）
+// APIルート群
 // ════════════════════════════════════════
-app.get('/api/subscription/status', authenticate, async (req, res) => {
-  if (!db) return res.json({ status: 'inactive' });
-  try {
-    const doc = await db.collection('users').doc(req.uid).get();
-    if (!doc.exists) return res.json({ status: 'inactive' });
-    res.json({ status: doc.data().subscriptionStatus || 'inactive' });
-  } catch (e) {
-    res.status(500).json({ error: 'サーバーエラーが発生しました' });
-  }
-});
-
-app.post('/api/subscription/create-checkout', authenticate, async (req, res) => {
-  try {
-    const priceId = process.env.STRIPE_PRICE_ID ? process.env.STRIPE_PRICE_ID.trim() : '';
-    if (!priceId) throw new Error("PRICE_ID is missing");
-
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      customer_email: req.email,
-      client_reference_id: req.uid,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${domainURL}/?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${domainURL}/`,
-    });
-    res.json({ url: session.url });
-  } catch (e) {
-    res.status(500).json({ error: '決済処理の開始に失敗しました' });
-  }
-});
-
-app.post('/api/config/save', authenticate, async (req, res) => {
+app.post('/api/config/save', async (req, res) => {
   const { config } = req.body;
   if (!config) return res.status(400).json({ error: 'configがありません' });
   if (!db) return res.status(500).json({ error: 'DB接続がありません' });
   try {
-    await db.collection('vaultConfigs').doc(req.uid).set({
+    await db.collection('vaultConfigs').doc(DEFAULT_UID).set({
       config,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
@@ -291,10 +147,10 @@ app.post('/api/config/save', authenticate, async (req, res) => {
   }
 });
 
-app.get('/api/config/load', authenticate, async (req, res) => {
+app.get('/api/config/load', async (req, res) => {
   if (!db) return res.json({ config: null });
   try {
-    const doc = await db.collection('vaultConfigs').doc(req.uid).get();
+    const doc = await db.collection('vaultConfigs').doc(DEFAULT_UID).get();
     if (!doc.exists) return res.json({ config: null });
     res.json({ config: doc.data().config });
   } catch (e) {
@@ -344,13 +200,13 @@ app.post('/api/calculate', (req, res) => {
   }
 });
 
-app.post('/api/history/save', authenticate, async (req, res) => {
+app.post('/api/history/save', async (req, res) => {
   const { snapshot } = req.body;
   if (!snapshot) return res.status(400).json({ error: 'snapshotがありません' });
   if (!db) return res.status(500).json({ error: 'DB接続がありません' });
   try {
     await db.collection('vaultHistory').add({
-      uid: req.uid,
+      uid: DEFAULT_UID,
       ...snapshot,
       savedAt: snapshot.savedAt || new Date().toISOString()
     });
@@ -360,10 +216,10 @@ app.post('/api/history/save', authenticate, async (req, res) => {
   }
 });
 
-app.get('/api/history/load', authenticate, async (req, res) => {
+app.get('/api/history/load', async (req, res) => {
   if (!db) return res.json({ history: [] });
   try {
-    const snap = await db.collection('vaultHistory').where('uid', '==', req.uid).orderBy('savedAt', 'desc').limit(50).get();
+    const snap = await db.collection('vaultHistory').where('uid', '==', DEFAULT_UID).orderBy('savedAt', 'desc').limit(50).get();
     const history = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json({ history });
   } catch (e) {
@@ -371,13 +227,13 @@ app.get('/api/history/load', authenticate, async (req, res) => {
   }
 });
 
-app.post('/api/history/delete', authenticate, async (req, res) => {
+app.post('/api/history/delete', async (req, res) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ error: 'idがありません' });
   if (!db) return res.status(500).json({ error: 'DB接続がありません' });
   try {
     const doc = await db.collection('vaultHistory').doc(id).get();
-    if (!doc.exists || doc.data().uid !== req.uid) return res.status(403).json({ error: '権限がありません' });
+    if (!doc.exists || doc.data().uid !== DEFAULT_UID) return res.status(403).json({ error: '権限がありません' });
     await db.collection('vaultHistory').doc(id).delete();
     res.json({ ok: true });
   } catch (e) {
