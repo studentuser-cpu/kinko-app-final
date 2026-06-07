@@ -8,80 +8,13 @@
 <meta property="og:type" content="website">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
 <style>
-/* ════════════════════════════════════════
-   ログイン画面
-════════════════════════════════════════ */
-#loginScreen {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; background: #f0f2f5;
-}
-.login-card {
-  background: white; border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  padding: 40px 36px; width: 340px; max-width: 95vw;
-}
-.login-card h2 {
-  margin: 0 0 6px 0; color: #1e3799; font-size: 22px; text-align: center;
-}
-.login-card p {
-  margin: 0 0 24px 0; color: #636e72; font-size: 13px; text-align: center;
-}
-.login-card label { display: block; font-size: 13px; color: #2f3542; margin-bottom: 4px; font-weight: bold; }
-.login-card input[type="email"],
-.login-card input[type="password"] {
-  width: 100%; box-sizing: border-box; padding: 10px 12px;
-  border: 1px solid #ced4da; border-radius: 6px; font-size: 14px;
-  margin-bottom: 16px; outline: none;
-}
-.login-card input:focus { border-color: #1e3799; box-shadow: 0 0 0 3px rgba(30,55,153,0.1); }
-.btn-primary {
-  width: 100%; padding: 12px; background: #1e3799; color: white;
-  border: none; border-radius: 6px; font-size: 15px; font-weight: bold;
-  cursor: pointer; margin-bottom: 10px; transition: background 0.2s;
-}
-.btn-primary:hover:not(:disabled) { background: #3867d6; }
-.btn-primary:disabled { background: #a4b0be; cursor: not-allowed; }
-.btn-secondary {
-  width: 100%; padding: 10px; background: white; color: #1e3799;
-  border: 1px solid #1e3799; border-radius: 6px; font-size: 14px;
-  cursor: pointer;
-}
-.btn-secondary:hover:not(:disabled) { background: #eef2f7; }
-#loginError { color: #eb4d4b; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; line-height: 1.4; }
-.login-divider { text-align: center; color: #aaa; margin: 12px 0; font-size: 12px; }
-
-/* ════════════════════════════════════════
-   サブスクリプション画面
-════════════════════════════════════════ */
-#subscriptionScreen {
-  display: none; align-items: center; justify-content: center;
-  min-height: 100vh; background: #f0f2f5; flex-direction: column;
-}
-.sub-card {
-  background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  padding: 40px 36px; width: 400px; max-width: 95vw; text-align: center;
-}
-.sub-card h2 { color: #1e3799; margin-top: 0; }
-.sub-btn {
-  background: #2ed573; color: white; border: none; padding: 15px 30px;
-  font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer;
-  margin-top: 20px; width: 100%; transition: background 0.2s;
-}
-.sub-btn:hover { background: #26b360; }
-
 /* ════════════════════════════════════════
    メインアプリ
 ════════════════════════════════════════ */
-#appScreen { display: none; }
-
 body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #f0f2f5; padding: 0; margin: 0; color: #2f3542; }
 .header-bar { display: flex; justify-content: space-between; align-items: center; background: #1e3799; color: white; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .header-right { display: flex; align-items: center; gap: 12px; }
-.header-user { font-size: 13px; opacity: 0.85; }
 .logout-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
 .logout-btn:hover { background: rgba(255,255,255,0.35); }
 .sync-status { font-size: 11px; opacity: 0.7; }
@@ -200,55 +133,12 @@ td.edge-right { border-right: 2px solid black !important; }
 </head>
 <body>
 
-<div id="loginScreen">
-  <div class="login-card">
-    <h2>🏦 金庫管理</h2>
-    <p>アカウントにログインしてください</p>
-    <div id="loginError"></div>
-
-    <div id="loginForm">
-      <label>メールアドレス</label>
-      <input type="email" id="loginEmail" placeholder="example@email.com" autocomplete="email">
-      <label>パスワード</label>
-      <input type="password" id="loginPassword" placeholder="パスワード" autocomplete="current-password">
-      <button class="btn-primary" id="loginSubmitBtn" onclick="doLogin()">ログイン</button>
-      <div class="login-divider">または</div>
-      <button class="btn-secondary" onclick="showRegister()">新規アカウント登録</button>
-    </div>
-
-    <div id="registerForm" style="display:none;">
-      <label>メールアドレス</label>
-      <input type="email" id="regEmail" placeholder="example@email.com" autocomplete="email">
-      <label>パスワード（6文字以上）</label>
-      <input type="password" id="regPassword" placeholder="パスワード" autocomplete="new-password">
-      <label>パスワード（確認）</label>
-      <input type="password" id="regPassword2" placeholder="パスワード（確認）" autocomplete="new-password">
-      <button class="btn-primary" onclick="doRegister()">登録する</button>
-      <div class="login-divider"></div>
-      <button class="btn-secondary" onclick="showLogin()">ログインに戻る</button>
-    </div>
-  </div>
-</div>
-
-<div id="subscriptionScreen">
-  <div class="sub-card">
-    <h2>🔒 プランの登録が必要です</h2>
-    <p>金庫管理システムをご利用いただくには、<br>サブスクリプションの登録が必要です。</p>
-    <button class="sub-btn" id="subscribeBtn" onclick="startSubscription()">プランに登録する</button>
-    <div style="margin-top: 20px;">
-      <button class="btn-secondary" onclick="doLogout()">ログアウト</button>
-    </div>
-  </div>
-</div>
-
-<div id="appScreen">
+<div id="appScreen" style="display:block;">
   <div class="header-bar">
     <div><strong>金庫管理</strong></div>
     <div class="header-right">
       <span class="sync-status" id="syncStatus"></span>
-      <span class="header-user" id="headerUser"></span>
       <button id="settingBtn" class="logout-btn">設定・説明</button>
-      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
     </div>
   </div>
 
@@ -417,27 +307,8 @@ td.edge-right { border-right: 2px solid black !important; }
 </div>
 
 <script>
-// ════════════════════════════════════════
-// Firebaseの設定
-// ════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyDyGmC0Bsx8m1WhMNKBwYwJEzJD-ZGOFf8",
-  authDomain: "kinko-23cf0.firebaseapp.com",
-  projectId: "kinko-23cf0",
-  storageBucket: "kinko-23cf0.firebasestorage.app",
-  messagingSenderId: "1459229783",
-  appId: "1:1459229783:web:e57ba867d7372ef70c3f12",
-  measurementId: "G-0KHWDKSYP6"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-// ★ 追加: APIベースURL
 const BASE_URL = 'https://kinko-app-final-4se3.onrender.com';
 
-// ════════════════════════════════════════
-// セキュリティ用：HTML特殊文字のエスケープ関数
-// ════════════════════════════════════════
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -448,147 +319,12 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// ════════════════════════════════════════
-// 認証UI制御
-// ════════════════════════════════════════
-function showLogin()    { document.getElementById('loginForm').style.display='block'; document.getElementById('registerForm').style.display='none'; document.getElementById('loginError').textContent=''; }
-function showRegister() { document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='block'; document.getElementById('loginError').textContent=''; }
-
-async function doLogin() {
-  const email    = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const btn = document.getElementById('loginSubmitBtn');
-  
-  document.getElementById('loginError').textContent = '';
-
-  // 【追加】Gmail以外のドメインによるログイン制限
-  if (!email.endsWith('@gmail.com')) {
-    document.getElementById('loginError').textContent = '正規のGmailアドレス（@gmail.com）のみログイン可能です。';
-    return;
-  }
-
-  // ★ボタンの連続押し防止と視覚的フィードバック
-  btn.disabled = true;
-  btn.innerText = 'ログイン処理中...';
-  
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-  } catch(e) {
-    document.getElementById('loginError').textContent = loginErrorMsg(e.code);
-    btn.disabled = false;
-    btn.innerText = 'ログイン';
-  }
-}
-
-async function doRegister() {
-  const email = document.getElementById('regEmail').value.trim();
-  const pw1   = document.getElementById('regPassword').value;
-  const pw2   = document.getElementById('regPassword2').value;
-  document.getElementById('loginError').textContent = '';
-
-  // 【追加】Gmail以外のドメインによる新規登録制限
-  if (!email.endsWith('@gmail.com')) {
-    document.getElementById('loginError').textContent = '正規のGmailアドレス（@gmail.com）のみ登録可能です。';
-    return;
-  }
-
-  if (pw1 !== pw2) { document.getElementById('loginError').textContent = 'パスワードが一致しません'; return; }
-  if (pw1.length < 6) { document.getElementById('loginError').textContent = 'パスワードは6文字以上にしてください'; return; }
-  try {
-    await auth.createUserWithEmailAndPassword(email, pw1);
-  } catch(e) {
-    document.getElementById('loginError').textContent = loginErrorMsg(e.code);
-  }
-}
-
-async function doLogout() {
-  await auth.signOut();
-}
-
-function loginErrorMsg(code) {
-  const map = {
-    'auth/invalid-email':       'メールアドレスの形式が正しくありません',
-    'auth/user-not-found':      'アカウントが見つかりません',
-    'auth/wrong-password':      'パスワードが違います',
-    'auth/invalid-credential':  'メールアドレスまたはパスワードが正しくありません',
-    'auth/email-already-in-use':'このメールアドレスはすでに登録されています',
-    'auth/too-many-requests':   'しばらく時間をおいてからお試しください',
-  };
-  return map[code] || 'エラーが発生しました: ' + code;
-}
-
-// ════════════════════════════════════════
-// 認証状態の監視 → サブスクリプション状態のチェック
-// ════════════════════════════════════════
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    document.getElementById('headerUser').textContent = user.email;
-    
-    // ★UI改善: サーバー通信中は画面を消さず、カード内に「確認中」を明記する
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('loginError').innerHTML = '<span style="color:#1e3799; font-weight:bold; font-size:15px;">サーバーと通信しています...<br>（最大50秒ほどかかる場合があります）</span>';
-    
-    try {
-      const headers = await getAuthHeader();
-      const res = await fetch(BASE_URL + '/api/subscription/status', { headers });
-      
-      if (!res.ok) throw new Error('Network error');
-      const data = await res.json();
-
-      if (data.status === 'active') {
-        // 課金済み：アプリ画面を表示
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('subscriptionScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display = 'block';
-        await loadConfigFromServer();
-        init();
-      } else {
-        // 未課金：サブスク案内画面を表示
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('subscriptionScreen').style.display = 'flex';
-        document.getElementById('appScreen').style.display = 'none';
-      }
-    } catch(e) {
-      console.error("ステータス確認エラー:", e);
-      // サーバーが落ちている場合は再読み込みかログアウトを促す
-      document.getElementById('loginError').innerHTML = `
-        <span style="color:#eb4d4b; font-weight:bold;">サーバーとの接続に失敗しました。</span><br>
-        <span style="font-size:12px; color:#666;">時間を置いてから再度お試しください。</span><br>
-        <button class="btn-secondary" style="margin-top:15px;" onclick="location.reload()">画面を更新</button>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="doLogout()">ログアウトして戻る</button>
-      `;
-    }
-  } else {
-    // 未ログイン状態のUIリセット
-    const btn = document.getElementById('loginSubmitBtn');
-    if(btn) { btn.disabled = false; btn.innerText = 'ログイン'; }
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('loginError').innerHTML = '';
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('appScreen').style.display   = 'none';
-    if(document.getElementById('subscriptionScreen')) {
-      document.getElementById('subscriptionScreen').style.display = 'none';
-    }
-  }
-});
-
-// ════════════════════════════════════════
-// サーバーAPIとの通信（Firebaseトークン付き）
-// ════════════════════════════════════════
-async function getAuthHeader() {
-  const token = await auth.currentUser.getIdToken();
-  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
-}
-
 async function saveConfigToServer() {
   try {
     setSyncStatus('保存中...');
-    const headers = await getAuthHeader();
     const res = await fetch(BASE_URL + '/api/config/save', {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config })
     });
     const data = await res.json();
@@ -602,8 +338,7 @@ async function saveConfigToServer() {
 async function loadConfigFromServer() {
   try {
     setSyncStatus('読み込み中...');
-    const headers = await getAuthHeader();
-    const res = await fetch(BASE_URL + '/api/config/load', { method: 'GET', headers });
+    const res = await fetch(BASE_URL + '/api/config/load');
     const data = await res.json();
     if (data.config) {
       config = data.config;
@@ -621,39 +356,6 @@ function setSyncStatus(msg) {
   document.getElementById('syncStatus').textContent = msg;
 }
 
-// ════════════════════════════════════════
-// サブスクリプション決済画面への遷移処理
-// ════════════════════════════════════════
-async function startSubscription() {
-  const btn = document.getElementById('subscribeBtn');
-  btn.innerText = '準備中...';
-  btn.disabled = true;
-
-  try {
-    const headers = await getAuthHeader();
-    const res = await fetch(BASE_URL + '/api/subscription/create-checkout', { 
-      method: 'POST', 
-      headers 
-    });
-    const data = await res.json();
-    
-    if (data.url) {
-      window.location.href = data.url; 
-    } else {
-      alert("決済画面の準備に失敗しました。");
-      btn.innerText = 'プランに登録する';
-      btn.disabled = false;
-    }
-  } catch(e) {
-    alert("エラーが発生しました: " + e.message);
-    btn.innerText = 'プランに登録する';
-    btn.disabled = false;
-  }
-}
-
-// ════════════════════════════════════════
-// 既存アプリのロジック
-// ════════════════════════════════════════
 const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: false, pin: "1234",
@@ -856,15 +558,13 @@ document.getElementById("saveSnapshotBtn").addEventListener("click", async () =>
   const snapshot = { inputs: savedInputs, total, diff, need, memo, savedAt: new Date().toISOString() };
   try {
     setSyncStatus('保存中...');
-    const headers = await getAuthHeader();
-    const res = await fetch(BASE_URL + '/api/history/save', { method:'POST', headers, body: JSON.stringify({ snapshot }) });
+    const res = await fetch(BASE_URL + '/api/history/save', { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot }) });
     const data = await res.json();
     setSyncStatus(data.ok ? '💾 保存完了' : '⚠️ 保存失敗');
   } catch(e) { setSyncStatus('⚠️ 保存失敗'); }
   setTimeout(() => setSyncStatus(''), 3000);
 });
 
-// ★修正: switchHistoryView の引数を修正
 function switchHistoryView(view, btnElement) {
   document.querySelectorAll('.history-view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.history-tab-btn').forEach(b => b.classList.remove('active'));
@@ -891,8 +591,7 @@ document.getElementById("historyBtn").addEventListener("click", async () => {
   updateHistoryButtonVisibility();
 
   try {
-    const headers = await getAuthHeader();
-    const res = await fetch(BASE_URL + '/api/history/load', { method:'GET', headers });
+    const res = await fetch(BASE_URL + '/api/history/load');
     const data = await res.json();
     currentHistoryData = data.history || [];
     
@@ -1014,8 +713,7 @@ function toggleSelectAll() {
 async function deleteHistory(id) {
   if (!confirm("この履歴を削除しますか？")) return;
   try {
-    const headers = await getAuthHeader();
-    await fetch(BASE_URL + '/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id }) });
+    await fetch(BASE_URL + '/api/history/delete', { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
     document.getElementById("historyBtn").click();
   } catch(e) { alert("削除失敗"); }
 }
@@ -1024,9 +722,8 @@ async function deleteSelectedHistory() {
   if (selectedHistoryIds.size === 0) { alert("削除する履歴を選択してください"); return; }
   if (!confirm(`${selectedHistoryIds.size}件の履歴を削除しますか？`)) return;
   try {
-    const headers = await getAuthHeader();
     for (const id of selectedHistoryIds) {
-      await fetch(BASE_URL + '/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id }) });
+      await fetch(BASE_URL + '/api/history/delete', { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
     }
     document.getElementById("historyBtn").click();
   } catch(e) { alert("削除失敗"); }
@@ -1035,9 +732,8 @@ async function deleteSelectedHistory() {
 async function deleteAllHistory() {
   if (!confirm("すべての履歴を削除しますか？\n(この操作は取り消せません)")) return;
   try {
-    const headers = await getAuthHeader();
     for (const h of currentHistoryData) {
-      await fetch(BASE_URL + '/api/history/delete', { method:'POST', headers, body: JSON.stringify({ id: h.id }) });
+      await fetch(BASE_URL + '/api/history/delete', { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: h.id }) });
     }
     document.getElementById("historyBtn").click();
   } catch(e) { alert("削除失敗"); }
@@ -1154,19 +850,8 @@ document.addEventListener('focusin', function(e) {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
 });
 
-// ★修正: ログイン時のエンターキー誤作動をブロックし、正常にエンターでログインできるようにしました
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
-    // ログイン画面にいる場合はログインボタンを押す
-    if (document.getElementById('loginScreen').style.display !== 'none') {
-      if (e.target.id === 'loginEmail' || e.target.id === 'loginPassword') {
-        e.preventDefault();
-        doLogin();
-        return;
-      }
-    }
-    
-    // 金庫アプリの画面にいる場合のカーソル移動
     if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
       e.preventDefault();
       const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
@@ -1181,6 +866,12 @@ init = function() {
   originalInit();
   document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode','numeric'));
 };
+
+// アプリの初期化
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadConfigFromServer();
+  init();
+});
 </script>
 </body>
 </html>
