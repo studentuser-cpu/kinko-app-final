@@ -16,22 +16,4 @@
 * **Database & Auth**: Firebase (Authentication, Firestore)
 * **Payment**: Stripe API
 
-## 環境変数 (Environment Variables)
-サーバーを起動する前に、以下の環境変数を設定してください。
 
-| 変数名 | 説明 | 必須 |
-|---|---|---|
-| `STRIPE_SECRET_KEY` | StripeのシークレットAPIキー | 必須 |
-| `STRIPE_WEBHOOK_SECRET` | Stripe Webhookの署名シークレット | 必須 |
-| `STRIPE_PRICE_ID` | サブスクリプション決済用の価格ID | 必須 |
-| `FIREBASE_SERVICE_ACCOUNT`| Firebase Admin SDKのサービスアカウントJSON | 必須 |
-| `APP_URL` | 本番環境のURL（CORSおよびStripeのリダイレクト用） | 任意 |
-| `ADMIN_USER` | 管理者API用のBasic認証ユーザー名 | 任意 |
-| `ADMIN_PASS` | 管理者API用のBasic認証パスワード | 任意 |
-| `ALLOWED_ADMIN_IPS` | 管理者APIへのアクセスを許可するIP（カンマ区切り）| 任意 |
-
-## セットアップと起動手順
-
-1. **パッケージのインストール**
-```bash
-   npm install express cors helmet express-rate-limit firebase-admin stripe
