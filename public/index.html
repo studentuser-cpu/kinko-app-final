@@ -31,11 +31,11 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
 .container.setting-open #mainTableWrapper { display: none; }
 
 table { border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; white-space: nowrap; }
-td, th { border: 1px solid #e1e4e8; padding: 10px; text-align: center; min-width: 80px; transition: all 0.2s; }
+td, th { border: 1px solid #e1e4e8; padding: 10px; text-align: center; min-width: 60px; transition: all 0.2s; }
 th { background: #1e3799; color: white; font-size: 13px; }
 input[type="number"], input[type="text"], input[type="password"], select { text-align: center; font-size: 16px; border: 1px solid #ced4da; border-radius: 4px; padding: 3px; outline: none; }
 input[type="number"]:focus, select:focus { border-color: #fbc531; box-shadow: 0 0 5px rgba(251,197,49,0.5); }
-input[type="number"] { width: 65px; }
+input[type="number"] { width: 60px; }
 .total { font-weight: bold; background: #f8f9fa; }
 .diff-ok { color: #2f3542; }
 .diff-ng { color: #eb4d4b; font-weight: bold; }
@@ -70,12 +70,10 @@ input[type="number"] { width: 65px; }
 
 /* 夜モード：レジ両替 */
 #nightContainer { display: none; padding: 20px 10px; }
-.night-wrapper { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+.night-wrapper { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
 .night-table-wrapper { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px; overflow-x: auto; }
 .night-table-wrapper h4 { margin-top: 0; text-align: center; color: #1e3799; }
 .night-table-wrapper table { width: 100%; }
-.night-table-wrapper input[type="number"] { width: 70px; }
-.night-current-val { display: inline-block; min-width: 40px; text-align: center; color: #636e72; font-weight: bold; }
 .night-total-line { text-align: center; font-size: 14px; margin-top: 10px; color: #2f3542; }
 .night-warning { text-align: center; font-size: 13px; color: #eb4d4b; margin-bottom: 10px; }
 #reflectBtn { display: block; margin: 0 auto; padding: 12px 40px; background: #2ed573; color: #fff; font-size: 16px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
@@ -143,7 +141,7 @@ td.edge-right { border-right: 2px solid black !important; }
   .container { padding: 10px; gap: 14px; }
   .tables-wrapper { gap: 16px; }
   #mainTableWrapper, #exchangeTableWrapper { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  td, th { padding: 6px; min-width: 60px; }
+  td, th { padding: 6px; min-width: 50px; }
   .modal-panel { width: 100%; padding: 15px; }
   .settings-table-wrapper { min-width: 0; width: 100%; box-sizing: border-box; padding: 10px; }
   .settings-tables-container { gap: 12px; }
@@ -297,7 +295,7 @@ td.edge-right { border-right: 2px solid black !important; }
   <div class="night-wrapper">
     
     <div class="night-table-wrapper">
-      <h4>① 金庫から出す量（レジへの補充）</h4>
+      <h4>① レジ両替・金庫から出す量</h4>
       <table>
         <thead>
           <tr><th rowspan="2">金額</th><th colspan="2">棒金</th><th colspan="2">枚数</th></tr>
@@ -309,8 +307,8 @@ td.edge-right { border-right: 2px solid black !important; }
     </div>
 
     <div class="night-table-wrapper">
-      <h4>② 両替後の金庫残高（直接入力・編集可能）</h4>
-      <p style="font-size:12px; margin:0 0 10px 0; color:#636e72;">※①を差し引いた値が自動計算されます。直接数値を入力・変更できます。</p>
+      <h4>② 両替後の金庫残高（自動計算・直接編集可能）</h4>
+      <p style="font-size:12px; margin:0 0 10px 0; color:#636e72;">※①を基に自動計算されます。直接手入力での変更も可能です。</p>
       <table>
         <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
         <tbody id="nightResultBody"></tbody>
@@ -913,27 +911,43 @@ document.addEventListener('focusin', function(e) {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
 });
 
+// 表示中の領域内の入力フィールドを取得（ナビゲーション用）
+function getActiveInputs() {
+  const isNight = document.getElementById('nightContainer').style.display === 'block';
+  if (isNight) {
+    return Array.from(document.querySelectorAll('#nightContainer input[type="number"]'));
+  } else {
+    return Array.from(document.querySelectorAll('#mainContainer .tables-wrapper input[type="number"]'));
+  }
+}
+
+// Enterキーでの自動フォーカス移動
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
       e.preventDefault();
-      const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
+      const navRoute = getActiveInputs();
       const currentIndex = navRoute.indexOf(e.target);
-      if (currentIndex > -1) navRoute[(currentIndex+1) % navRoute.length].focus();
+      if (currentIndex > -1 && currentIndex < navRoute.length - 1) {
+        navRoute[currentIndex + 1].focus();
+      }
     }
   }
 });
 
-// スマホ・タブレット（タッチ操作）では、2桁入力すると自動的に次の欄へ移動する
+// スマホ・タブレットでの2桁入力時自動ナビゲーション
 const isTouchCapable = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
 if (isTouchCapable) {
   const AUTO_ADVANCE_DIGITS = 2;
   document.addEventListener('input', function(e) {
-    if (!(e.target.classList && (e.target.classList.contains('in-bar') || e.target.classList.contains('in-coin')))) return;
-    if (e.target.value.replace('-', '').length >= AUTO_ADVANCE_DIGITS) {
-      const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
-      const currentIndex = navRoute.indexOf(e.target);
-      if (currentIndex > -1) navRoute[(currentIndex+1) % navRoute.length].focus();
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+      if (e.target.value.replace('-', '').length >= AUTO_ADVANCE_DIGITS) {
+        const navRoute = getActiveInputs();
+        const currentIndex = navRoute.indexOf(e.target);
+        if (currentIndex > -1 && currentIndex < navRoute.length - 1) {
+          navRoute[currentIndex + 1].focus();
+        }
+      }
     }
   });
 }
@@ -943,14 +957,11 @@ init = function() {
   originalInit();
   document.querySelectorAll('input[type="number"]').forEach(i => i.setAttribute('inputmode','numeric'));
   buildNightTables();
-  refreshNightCurrentValues();
 };
 
 // ════════════════════════════════════════
 // 夜モード：レジ両替
 // ════════════════════════════════════════
-const nightNoteDenoms = [10000, 5000, 1000]; // お札（棒金の概念がない単位）
-
 function getNightCellHTML(s, type, price) {
   const mode = type === 'bar' ? s.bMode : s.cMode;
   if (mode === "none") return "";
@@ -959,22 +970,19 @@ function getNightCellHTML(s, type, price) {
 }
 
 function buildNightTables() {
-  // ① 金庫から出す量（レジへの補充）
+  // ① レジ両替・金庫から出す量（すべて入力フィールド化）
   const outBody = document.getElementById('nightOutBody');
   outBody.innerHTML = prices.map(p => {
-    const isCoin = !nightNoteDenoms.includes(p);
-    const curBarCell = isCoin ? `<span class="night-current-val" id="night-cur-bar-${p}">0</span>` : '-';
-    const outBarCell = isCoin ? `<input type="number" class="night-out-bar" data-price="${p}">` : '-';
     return `<tr>
       <td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td>
-      <td>${curBarCell}</td>
-      <td>${outBarCell}</td>
-      <td><span class="night-current-val" id="night-cur-coin-${p}">0</span></td>
+      <td><input type="number" class="night-cur-bar" data-price="${p}"></td>
+      <td><input type="number" class="night-out-bar" data-price="${p}"></td>
+      <td><input type="number" class="night-cur-coin" data-price="${p}"></td>
       <td><input type="number" class="night-out-coin" data-price="${p}"></td>
     </tr>`;
   }).join('');
 
-  // ② 両替後の金庫残高（朝の入力フォームと同様の構成）
+  // ② 両替後の金庫残高
   const resultBody = document.getElementById('nightResultBody');
   resultBody.innerHTML = prices.map(p => {
     const s = config.denoms[p];
@@ -988,44 +996,51 @@ function buildNightTables() {
     </tr>`;
   }).join('');
 
-  // 入力イベント割り当て
+  // ①の各入力欄変更時に即座に②へ計算反映
+  document.querySelectorAll('#nightOutBody input').forEach(el => {
+    el.addEventListener('input', calculateNightAll);
+  });
+
+  // ②の入力欄の直接変更時
   document.querySelectorAll('.night-res-bar-in, .night-res-coin-in').forEach(el => {
     el.addEventListener('input', calculateNightResultTotalOnly);
   });
 }
 
-// 朝の金庫管理の現在値を①に反映し、②の初期値（現在値 - 出す量）を計算
-function refreshNightCurrentValues() {
+// 夜モード開いた際に朝の現在値を初期値として読み込む（編集自由）
+function populateNightFromMorning() {
   prices.forEach(p => {
-    const barVal  = Number(document.querySelector(`.in-bar[data-price="${p}"]`)?.value || 0);
-    const coinVal = Number(document.querySelector(`.in-coin[data-price="${p}"]`)?.value || 0);
-    const curBarEl  = document.getElementById(`night-cur-bar-${p}`);
-    const curCoinEl = document.getElementById(`night-cur-coin-${p}`);
-    if (curBarEl)  curBarEl.innerText = barVal;
-    if (curCoinEl) curCoinEl.innerText = coinVal;
+    const barVal  = document.querySelector(`.in-bar[data-price="${p}"]`)?.value || "";
+    const coinVal = document.querySelector(`.in-coin[data-price="${p}"]`)?.value || "";
+    const curBarEl  = document.querySelector(`.night-cur-bar[data-price="${p}"]`);
+    const curCoinEl = document.querySelector(`.night-cur-coin[data-price="${p}"]`);
+    if (curBarEl)  curBarEl.value = barVal;
+    if (curCoinEl) curCoinEl.value = coinVal;
   });
-  calculateNightOut();
+  calculateNightAll();
 }
 
-function calculateNightOut() {
+// ①の「現在」「出す量」の双方から計算して②へ自動反映
+function calculateNightAll() {
   let outTotal = 0;
   prices.forEach(p => {
     const perBar = config.denoms[p].perBar;
-    const curBar  = Number(document.getElementById(`night-cur-bar-${p}`)?.innerText || 0);
-    const curCoin = Number(document.getElementById(`night-cur-coin-${p}`)?.innerText || 0);
+    const curBar  = Number(document.querySelector(`.night-cur-bar[data-price="${p}"]`)?.value || 0);
+    const curCoin = Number(document.querySelector(`.night-cur-coin[data-price="${p}"]`)?.value || 0);
     const outBar  = Number(document.querySelector(`.night-out-bar[data-price="${p}"]`)?.value || 0);
     const outCoin = Number(document.querySelector(`.night-out-coin[data-price="${p}"]`)?.value || 0);
-    
+
+    // 出す量の合計額計算
     outTotal += (outBar * perBar + outCoin) * p;
 
-    // ①「出す量」の入力に合わせて、②「両替後の残高」の入力欄を自動差し引き計算
+    // ②の残高を自動計算して反映
     const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
     const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
-    
+
     if (resBarInput)  resBarInput.value  = Math.max(0, curBar - outBar);
     if (resCoinInput) resCoinInput.value = Math.max(0, curCoin - outCoin);
   });
-  
+
   document.getElementById('nightOutTotal').innerText = outTotal.toLocaleString();
   calculateNightResultTotalOnly();
 }
@@ -1036,10 +1051,10 @@ function calculateNightResultTotalOnly() {
     const s = config.denoms[p];
     const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
     const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
-    
+
     const resBar  = Number(resBarInput?.value || 0);
     const resCoin = Number(resCoinInput?.value || 0);
-    
+
     let sum = 0;
     if (s.bMode !== "none" || s.cMode !== "none") {
       sum = ((resBar * s.perBar) + resCoin) * p;
@@ -1047,34 +1062,33 @@ function calculateNightResultTotalOnly() {
 
     const resSumEl = document.getElementById(`night-res-sum-${p}`);
     if (resSumEl) resSumEl.innerText = sum.toLocaleString();
-    
+
     resultTotal += sum;
   });
-  
+
   document.getElementById('nightResultTotal').innerText = resultTotal.toLocaleString();
 }
 
-document.getElementById('nightOutBody').addEventListener('input', calculateNightOut);
-
+// 「この内容を金庫に反映する」押下時
 document.getElementById('reflectBtn').addEventListener('click', () => {
   const skipped = [];
   prices.forEach(p => {
     const s = config.denoms[p];
     const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
     const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
-    
+
     const resBar  = resBarInput  ? resBarInput.value  : 0;
     const resCoin = resCoinInput ? resCoinInput.value : 0;
 
     const mainBarInput = document.querySelector(`.in-bar[data-price="${p}"]`);
     if (mainBarInput) mainBarInput.value = resBar;
-    else if (s.bMode !== 'none' && !nightNoteDenoms.includes(p) && resBar !== 0) {
+    else if (s.bMode !== 'none' && resBar != 0) {
       skipped.push(`${p.toLocaleString()}円 棒金`);
     }
 
     const mainCoinInput = document.querySelector(`.in-coin[data-price="${p}"]`);
     if (mainCoinInput) mainCoinInput.value = resCoin;
-    else if (s.cMode !== 'none' && resCoin !== 0) {
+    else if (s.cMode !== 'none' && resCoin != 0) {
       skipped.push(`${p.toLocaleString()}円 枚数`);
     }
   });
@@ -1083,12 +1097,10 @@ document.getElementById('reflectBtn').addEventListener('click', () => {
   const warningEl = document.getElementById('nightWarning');
   if (skipped.length > 0) {
     warningEl.style.display = 'block';
-    warningEl.innerText = `⚠ 以下は現在「設定」で表示が非表示になっているため金庫に反映できませんでした：${skipped.join('、')}。設定画面で表示をオンにしてから、もう一度反映してください。`;
+    warningEl.innerText = `⚠ 以下は現在「設定」で非表示になっているため金庫に反映できませんでした：${skipped.join('、')}。設定画面で表示をオンにしてから、もう一度反映してください。`;
   } else {
     warningEl.style.display = 'none';
-    alert('両替後の残高を金庫に反映しました。');
-    document.querySelectorAll('.night-out-bar, .night-out-coin').forEach(i => i.value = '');
-    refreshNightCurrentValues();
+    alert('両替後の残高を朝の金庫管理画面に反映しました。');
   }
 });
 
@@ -1100,7 +1112,7 @@ function switchDayNightMode(mode) {
   document.getElementById('nightContainer').style.display = isNight ? 'block' : 'none';
   document.getElementById('modeMorningBtn').classList.toggle('active', !isNight);
   document.getElementById('modeNightBtn').classList.toggle('active', isNight);
-  if (isNight) refreshNightCurrentValues();
+  if (isNight) populateNightFromMorning();
 }
 
 // アプリの初期化
