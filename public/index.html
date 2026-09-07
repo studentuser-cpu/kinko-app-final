@@ -951,6 +951,13 @@ init = function() {
 // ════════════════════════════════════════
 const nightNoteDenoms = [10000, 5000, 1000]; // お札（棒金の概念がない単位）
 
+function getNightCellHTML(s, type, price) {
+  const mode = type === 'bar' ? s.bMode : s.cMode;
+  if (mode === "none") return "";
+  if (mode === "hidden") return "-";
+  return `<input type="number" class="night-res-${type}-in" data-price="${price}">`;
+}
+
 function buildNightTables() {
   // ① 金庫から出す量（レジへの補充）
   const outBody = document.getElementById('nightOutBody');
@@ -967,15 +974,16 @@ function buildNightTables() {
     </tr>`;
   }).join('');
 
-  // ② 両替後の金庫残高（直接入力・編集可能）
+  // ② 両替後の金庫残高（朝の入力フォームと同様の構成）
   const resultBody = document.getElementById('nightResultBody');
   resultBody.innerHTML = prices.map(p => {
-    const isCoin = !nightNoteDenoms.includes(p);
-    const barCell = isCoin ? `<input type="number" class="night-res-bar-in" data-price="${p}">` : '-';
+    const s = config.denoms[p];
+    const barCell = getNightCellHTML(s, 'bar', p);
+    const coinCell = getNightCellHTML(s, 'coin', p);
     return `<tr>
       <td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td>
       <td>${barCell}</td>
-      <td><input type="number" class="night-res-coin-in" data-price="${p}"></td>
+      <td>${coinCell}</td>
       <td id="night-res-sum-${p}">0</td>
     </tr>`;
   }).join('');
@@ -1025,14 +1033,18 @@ function calculateNightOut() {
 function calculateNightResultTotalOnly() {
   let resultTotal = 0;
   prices.forEach(p => {
-    const perBar = config.denoms[p].perBar;
+    const s = config.denoms[p];
     const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
     const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
     
     const resBar  = Number(resBarInput?.value || 0);
     const resCoin = Number(resCoinInput?.value || 0);
     
-    const sum = (resBar * perBar + resCoin) * p;
+    let sum = 0;
+    if (s.bMode !== "none" || s.cMode !== "none") {
+      sum = ((resBar * s.perBar) + resCoin) * p;
+    }
+
     const resSumEl = document.getElementById(`night-res-sum-${p}`);
     if (resSumEl) resSumEl.innerText = sum.toLocaleString();
     
