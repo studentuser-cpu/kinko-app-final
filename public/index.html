@@ -199,21 +199,8 @@ td.edge-right { border-right: 2px solid black !important; }
         <span class="close-panel" onclick="closeSetting()" style="cursor:pointer; font-size:24px;">×</span>
       </div>
 
-      <div class="help-section">
-        <div class="help-col">
-          <h4>1. 表示設定（不足時の扱い）</h4>
-          <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
-          <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
-          <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
-        </div>
-        <div class="help-col">
-          <h4>2. 「両替使用」チェック</h4>
-          <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
-          <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-            <b>💡 例：1,000円札（目標35枚）</b><br>
-            手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
-          </div>
-        </div>
+      <div class="help-section" id="helpSectionContent">
+        <!-- 朝・夜モードに応じて動的生成されます -->
       </div>
 
       <div id="guide-step-1" style="margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 8px;">
@@ -231,7 +218,7 @@ td.edge-right { border-right: 2px solid black !important; }
                 <th id="guide-step-2">1本の枚数</th>
                 <th id="guide-step-3" style="background:#3867d6;">目標(本)</th>
                 <th id="guide-step-4" style="background:#3867d6;">表示設定</th>
-                <th id="guide-step-5" style="background:#3867d6;">両替使用</th>
+                <th id="guide-step-5" class="setting-th-use" style="background:#3867d6;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingBarTbody"></tbody>
@@ -245,7 +232,7 @@ td.edge-right { border-right: 2px solid black !important; }
                 <th>金額</th>
                 <th style="background:#4b7bec;">目標(枚)</th>
                 <th style="background:#4b7bec;">表示設定</th>
-                <th style="background:#4b7bec;">両替使用</th>
+                <th class="setting-th-use" style="background:#4b7bec;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingCoinTbody"></tbody>
@@ -445,6 +432,49 @@ let savedInputs = {};
 let currentHistoryData = [];
 let selectedHistoryIds = new Set();
 
+function updateSettingPanelContent(isNight) {
+  const helpEl = document.getElementById("helpSectionContent");
+  const thEls = document.querySelectorAll(".setting-th-use");
+
+  if (isNight) {
+    helpEl.innerHTML = `
+      <div class="help-col">
+        <h4>1. 表示設定（不足時の扱い）</h4>
+        <div><span class="help-tag bg-red">赤</span> 【必須】目標に対する不足分を「判定対象」とする</div>
+        <div><span class="help-tag bg-yellow">黄</span> 【目安】目標に対する不足分を「判定対象」としない</div>
+        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定を表示しない</div>
+      </div>
+      <div class="help-col">
+        <h4>2. 「余剰加算」チェック</h4>
+        <div>目標より<b>多く持っている分</b>を、余剰可能額として計算に含めます。</div>
+        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
+          <b>💡 例：1,000円札（目標35枚）</b><br>
+          手元に40枚ある場合、余った5枚分（5,000円）が余剰金として自動集計されます。
+        </div>
+      </div>
+    `;
+    thEls.forEach(th => th.innerText = "余剰加算");
+  } else {
+    helpEl.innerHTML = `
+      <div class="help-col">
+        <h4>1. 表示設定（不足時の扱い）</h4>
+        <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
+        <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
+        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
+      </div>
+      <div class="help-col">
+        <h4>2. 「両替使用」チェック</h4>
+        <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
+        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
+          <b>💡 例：1,000円札（目標35枚）</b><br>
+          手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
+        </div>
+      </div>
+    `;
+    thEls.forEach(th => th.innerText = "両替使用");
+  }
+}
+
 function init() {
   const inputBody = document.getElementById("inputBody");
   const exchangeBody = document.getElementById("exchangeBody");
@@ -585,7 +615,7 @@ const tourSteps = [
   { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
   { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
   { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
-  { id: "guide-step-5", msg: "5. 両替使用\nチェックを入れると、余剰分を「両替に使えるお金」として集計します。" },
+  { id: "guide-step-5", msg: "5. 余剰設定\nチェックを入れると、余剰分を集計対象として扱います。" },
   { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
   { id: "saveBtn",      msg: "7. 保存\n最後にここを押してクラウドへ保存してください。" }
 ];
@@ -615,6 +645,8 @@ function toggleOthersMenu(btn) {
 function openSettingModal() {
   const isNight = document.getElementById('modeNightBtn').classList.contains('active');
   
+  updateSettingPanelContent(isNight);
+
   document.getElementById("settingContainer").style.display = "flex";
   document.getElementById("modeSwitchBar").style.display = "none";
 
