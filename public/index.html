@@ -864,7 +864,8 @@ document.addEventListener('keydown', function(e) {
 });
 
 // スマホ・タブレット（タッチ操作）では、入力すると自動的に次の欄へ移動する
-if (window.matchMedia('(pointer: coarse)').matches) {
+const isTouchCapable = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+if (isTouchCapable) {
   let autoAdvanceTimer = null;
   document.addEventListener('input', function(e) {
     if (!(e.target.classList && (e.target.classList.contains('in-bar') || e.target.classList.contains('in-coin')))) return;
