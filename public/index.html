@@ -77,12 +77,9 @@ input[type="number"] { width: 65px; }
 .night-table-wrapper input[type="number"] { width: 70px; }
 .night-current-val { display: inline-block; min-width: 40px; text-align: center; color: #636e72; font-weight: bold; }
 .night-total-line { text-align: center; font-size: 14px; margin-top: 10px; color: #2f3542; }
-.night-result-negative { color: #eb4d4b; font-weight: bold; }
-.night-summary { text-align: center; font-size: 16px; font-weight: bold; margin: 15px 0 5px; color: #2ed573; }
-.night-summary.mismatch { color: #eb4d4b; }
 .night-warning { text-align: center; font-size: 13px; color: #eb4d4b; margin-bottom: 10px; }
 #reflectBtn { display: block; margin: 0 auto; padding: 12px 40px; background: #2ed573; color: #fff; font-size: 16px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
-#reflectBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #a4b0be; }
+#reflectBtn:hover { background: #26af5f; }
 
 @media (max-width: 820px) {
   .night-wrapper { gap: 15px; flex-direction: column; align-items: center; }
@@ -312,20 +309,8 @@ td.edge-right { border-right: 2px solid black !important; }
     </div>
 
     <div class="night-table-wrapper">
-      <h4>② 金庫に入れる量（レジからの回収）</h4>
-      <p style="font-size:12px; margin:0 0 10px 0; color:#636e72;">※①の額に合わせて自動計算（手動調整可）</p>
-      <table>
-        <thead>
-          <tr><th>金額</th><th>枚数</th><th>小計</th></tr>
-        </thead>
-        <tbody id="nightInBody"></tbody>
-      </table>
-      <div class="night-total-line">金庫に入れる合計：<span id="nightInTotal" style="font-weight:bold;color:#0097e6;">0</span>円</div>
-      <div id="nightMatchStatus" style="text-align:center; font-size:14px; font-weight:bold; margin-top:10px;"></div>
-    </div>
-
-    <div class="night-table-wrapper">
-      <h4>③ 両替後の金庫残高（自動計算）</h4>
+      <h4>② 両替後の金庫残高（直接入力・編集可能）</h4>
+      <p style="font-size:12px; margin:0 0 10px 0; color:#636e72;">※①を差し引いた値が自動計算されます。直接数値を入力・変更できます。</p>
       <table>
         <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
         <tbody id="nightResultBody"></tbody>
@@ -336,7 +321,7 @@ td.edge-right { border-right: 2px solid black !important; }
   </div>
   <div class="night-warning" id="nightWarning" style="display:none; margin-top:20px;"></div>
   <div style="text-align:center; margin-top: 20px;">
-    <button id="reflectBtn" disabled>✅ この内容を金庫に反映する</button>
+    <button id="reflectBtn">✅ この内容を金庫に反映する</button>
   </div>
 </div>
 
@@ -965,7 +950,6 @@ init = function() {
 // 夜モード：レジ両替
 // ════════════════════════════════════════
 const nightNoteDenoms = [10000, 5000, 1000]; // お札（棒金の概念がない単位）
-let lastOutTotal = -1;
 
 function buildNightTables() {
   // ① 金庫から出す量（レジへの補充）
@@ -983,31 +967,26 @@ function buildNightTables() {
     </tr>`;
   }).join('');
 
-  // ② 金庫に入れる量（レジからの回収）
-  const inBody = document.getElementById('nightInBody');
-  inBody.innerHTML = prices.map(p => {
-    return `<tr>
-      <td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td>
-      <td><input type="number" class="night-in-coin" data-price="${p}"></td>
-      <td id="night-in-sum-${p}">0</td>
-    </tr>`;
-  }).join('');
-
-  // ③ 両替後の金庫残高
+  // ② 両替後の金庫残高（直接入力・編集可能）
   const resultBody = document.getElementById('nightResultBody');
   resultBody.innerHTML = prices.map(p => {
     const isCoin = !nightNoteDenoms.includes(p);
-    const barCell = isCoin ? `<span id="night-res-bar-${p}">0</span>` : '-';
+    const barCell = isCoin ? `<input type="number" class="night-res-bar-in" data-price="${p}">` : '-';
     return `<tr>
       <td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td>
       <td>${barCell}</td>
-      <td><span id="night-res-coin-${p}">0</span></td>
+      <td><input type="number" class="night-res-coin-in" data-price="${p}"></td>
       <td id="night-res-sum-${p}">0</td>
     </tr>`;
   }).join('');
+
+  // 入力イベント割り当て
+  document.querySelectorAll('.night-res-bar-in, .night-res-coin-in').forEach(el => {
+    el.addEventListener('input', calculateNightResultTotalOnly);
+  });
 }
 
-// 主テーブル（朝の金庫管理）の現在値を①に反映する
+// 朝の金庫管理の現在値を①に反映し、②の初期値（現在値 - 出す量）を計算
 function refreshNightCurrentValues() {
   prices.forEach(p => {
     const barVal  = Number(document.querySelector(`.in-bar[data-price="${p}"]`)?.value || 0);
@@ -1017,7 +996,6 @@ function refreshNightCurrentValues() {
     if (curBarEl)  curBarEl.innerText = barVal;
     if (curCoinEl) curCoinEl.innerText = coinVal;
   });
-  lastOutTotal = -1; // 初期化して自動計算を確実に発火させる
   calculateNightOut();
 }
 
@@ -1025,99 +1003,38 @@ function calculateNightOut() {
   let outTotal = 0;
   prices.forEach(p => {
     const perBar = config.denoms[p].perBar;
+    const curBar  = Number(document.getElementById(`night-cur-bar-${p}`)?.innerText || 0);
+    const curCoin = Number(document.getElementById(`night-cur-coin-${p}`)?.innerText || 0);
     const outBar  = Number(document.querySelector(`.night-out-bar[data-price="${p}"]`)?.value || 0);
     const outCoin = Number(document.querySelector(`.night-out-coin[data-price="${p}"]`)?.value || 0);
+    
     outTotal += (outBar * perBar + outCoin) * p;
+
+    // ①「出す量」の入力に合わせて、②「両替後の残高」の入力欄を自動差し引き計算
+    const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
+    const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
+    
+    if (resBarInput)  resBarInput.value  = Math.max(0, curBar - outBar);
+    if (resCoinInput) resCoinInput.value = Math.max(0, curCoin - outCoin);
   });
   
   document.getElementById('nightOutTotal').innerText = outTotal.toLocaleString();
-
-  // ①の合計が変わった場合は②を自動計算する（一番大きい単位から順に割り当て）
-  if (lastOutTotal !== outTotal) {
-    autoCalculateNightIn(outTotal);
-    lastOutTotal = outTotal;
-  }
-  
-  calculateNightResult();
+  calculateNightResultTotalOnly();
 }
 
-function autoCalculateNightIn(targetAmount) {
-  let remain = targetAmount;
-  prices.forEach(p => {
-    let count = 0;
-    if (remain >= p) {
-      count = Math.floor(remain / p);
-      remain -= count * p;
-    }
-    const inputEl = document.querySelector(`.night-in-coin[data-price="${p}"]`);
-    if (inputEl) {
-      inputEl.value = count > 0 ? count : '';
-    }
-  });
-  calculateNightIn();
-}
-
-function calculateNightIn() {
-  let inTotal = 0;
-  prices.forEach(p => {
-    const inCoin = Number(document.querySelector(`.night-in-coin[data-price="${p}"]`)?.value || 0);
-    const sum = inCoin * p;
-    document.getElementById(`night-in-sum-${p}`).innerText = sum.toLocaleString();
-    inTotal += sum;
-  });
-  
-  document.getElementById('nightInTotal').innerText = inTotal.toLocaleString();
-  
-  // ①と②の合計額を比較してボタンを制御
-  const outTotal = Number(document.getElementById('nightOutTotal').innerText.replace(/,/g, ''));
-  const matchStatus = document.getElementById('nightMatchStatus');
-  const reflectBtn = document.getElementById('reflectBtn');
-  
-  if (inTotal === outTotal) {
-    if(outTotal === 0){
-      matchStatus.innerText = "金額を入力してください";
-      matchStatus.style.color = "#636e72";
-      reflectBtn.disabled = true;
-    } else {
-      matchStatus.innerText = "✅ 金額が一致しています";
-      matchStatus.style.color = "#2ed573";
-      reflectBtn.disabled = false;
-    }
-  } else {
-    matchStatus.innerText = `⚠️ 差額があります（${(inTotal - outTotal).toLocaleString()}円）`;
-    matchStatus.style.color = "#eb4d4b";
-    reflectBtn.disabled = true;
-  }
-
-  calculateNightResult();
-}
-
-function calculateNightResult() {
+function calculateNightResultTotalOnly() {
   let resultTotal = 0;
   prices.forEach(p => {
     const perBar = config.denoms[p].perBar;
+    const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
+    const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
     
-    const curBar  = Number(document.getElementById(`night-cur-bar-${p}`)?.innerText || 0);
-    const curCoin = Number(document.getElementById(`night-cur-coin-${p}`)?.innerText || 0);
-    
-    const outBar  = Number(document.querySelector(`.night-out-bar[data-price="${p}"]`)?.value || 0);
-    const outCoin = Number(document.querySelector(`.night-out-coin[data-price="${p}"]`)?.value || 0);
-    
-    const inCoin = Number(document.querySelector(`.night-in-coin[data-price="${p}"]`)?.value || 0);
-    
-    // 金庫から出す分を引き、金庫に入れる分を足す
-    const resBar = curBar - outBar;
-    const resCoin = curCoin - outCoin + inCoin;
-    
-    const resBarEl  = document.getElementById(`night-res-bar-${p}`);
-    const resCoinEl = document.getElementById(`night-res-coin-${p}`);
-    const resSumEl  = document.getElementById(`night-res-sum-${p}`);
-    
-    if (resBarEl)  { resBarEl.innerText = resBar; resBarEl.classList.toggle('night-result-negative', resBar < 0); }
-    if (resCoinEl) { resCoinEl.innerText = resCoin; resCoinEl.classList.toggle('night-result-negative', resCoin < 0); }
+    const resBar  = Number(resBarInput?.value || 0);
+    const resCoin = Number(resCoinInput?.value || 0);
     
     const sum = (resBar * perBar + resCoin) * p;
-    if (resSumEl)  resSumEl.innerText = sum.toLocaleString();
+    const resSumEl = document.getElementById(`night-res-sum-${p}`);
+    if (resSumEl) resSumEl.innerText = sum.toLocaleString();
     
     resultTotal += sum;
   });
@@ -1126,28 +1043,26 @@ function calculateNightResult() {
 }
 
 document.getElementById('nightOutBody').addEventListener('input', calculateNightOut);
-document.getElementById('nightInBody').addEventListener('input', calculateNightIn);
 
 document.getElementById('reflectBtn').addEventListener('click', () => {
   const skipped = [];
   prices.forEach(p => {
     const s = config.denoms[p];
-    const resBar  = Number(document.getElementById(`night-res-bar-${p}`)?.innerText || 0);
-    const resCoin = Number(document.getElementById(`night-res-coin-${p}`)?.innerText || 0);
+    const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
+    const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
     
-    const outBar  = Number(document.querySelector(`.night-out-bar[data-price="${p}"]`)?.value || 0);
-    const outCoin = Number(document.querySelector(`.night-out-coin[data-price="${p}"]`)?.value || 0);
-    const inCoin  = Number(document.querySelector(`.night-in-coin[data-price="${p}"]`)?.value || 0);
+    const resBar  = resBarInput  ? resBarInput.value  : 0;
+    const resCoin = resCoinInput ? resCoinInput.value : 0;
 
     const mainBarInput = document.querySelector(`.in-bar[data-price="${p}"]`);
     if (mainBarInput) mainBarInput.value = resBar;
-    else if (s.bMode !== 'none' && !nightNoteDenoms.includes(p) && outBar !== 0) {
+    else if (s.bMode !== 'none' && !nightNoteDenoms.includes(p) && resBar !== 0) {
       skipped.push(`${p.toLocaleString()}円 棒金`);
     }
 
     const mainCoinInput = document.querySelector(`.in-coin[data-price="${p}"]`);
     if (mainCoinInput) mainCoinInput.value = resCoin;
-    else if (s.cMode !== 'none' && (outCoin !== 0 || inCoin !== 0)) {
+    else if (s.cMode !== 'none' && resCoin !== 0) {
       skipped.push(`${p.toLocaleString()}円 枚数`);
     }
   });
@@ -1159,8 +1074,8 @@ document.getElementById('reflectBtn').addEventListener('click', () => {
     warningEl.innerText = `⚠ 以下は現在「設定」で表示が非表示になっているため金庫に反映できませんでした：${skipped.join('、')}。設定画面で表示をオンにしてから、もう一度反映してください。`;
   } else {
     warningEl.style.display = 'none';
-    alert('金庫の枚数に反映しました。');
-    document.querySelectorAll('.night-out-bar, .night-out-coin, .night-in-coin').forEach(i => i.value = '');
+    alert('両替後の残高を金庫に反映しました。');
+    document.querySelectorAll('.night-out-bar, .night-out-coin').forEach(i => i.value = '');
     refreshNightCurrentValues();
   }
 });
