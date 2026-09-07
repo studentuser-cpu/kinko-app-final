@@ -162,7 +162,6 @@ td.edge-right { border-right: 2px solid black !important; }
           <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
           <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
           <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
-          <div><span class="help-tag" style="background:#bbb; color:white;">none</span> 【除外】入力欄を消し、計算からも外す</div>
         </div>
         <div class="help-col">
           <h4>2. 「両替使用」チェック</h4>
@@ -353,10 +352,10 @@ const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: false, pin: "1234",
   denoms: {
-    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: true },
-    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "none",   cMode: "bg-red", isAvailB: false, isAvailC: false },
+    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
+    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
+    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
+    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: false },
     100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-red", isAvailB: false, isAvailC: false },
     50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
     10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
@@ -388,8 +387,8 @@ function init() {
     };
     inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode,"bar",valB)}</td><td>${getCell(s.cMode,"coin",valC)}</td><td id="sum-${p}">0</td></tr>`;
     exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
-    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option><option value="none" ${s.bMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
-    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option><option value="none" ${s.cMode=="none"?"selected":""}>none</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
+    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
+    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
   });
 
   document.querySelectorAll(".set-sync").forEach(el => {
