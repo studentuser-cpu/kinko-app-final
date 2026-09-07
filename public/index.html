@@ -25,9 +25,17 @@ body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-se
 .container.setting-open #floatingContainer { position: fixed; bottom: 20px; right: 20px; z-index: 1001; cursor: grab; touch-action: none; }
 .container.setting-open #exchangeTableWrapper { background: rgba(255,255,255,0.98); border: 3px solid #1e3799; padding: 10px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.4); zoom: 0.8; max-height: 60vh; overflow-y: auto; }
 .container.setting-open #floatingContainer:active { cursor: grabbing; }
-#previewToggleBtn { display: none; background: #1e3799; color: white; border: 2px solid white; border-radius: 20px; padding: 6px 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-weight: bold; }
+#previewToggleBtn, #nightPreviewToggleBtn { display: none; background: #1e3799; color: white; border: 2px solid white; border-radius: 20px; padding: 6px 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-weight: bold; }
 .container.setting-open #previewToggleBtn { display: block !important; }
 .container.setting-open #mainTableWrapper { display: none; }
+
+/* 夜モードの設定プレビュー表示 */
+#nightFloatingContainer { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+#nightContainer.setting-open #nightFloatingContainer { position: fixed; bottom: 20px; right: 20px; z-index: 1001; cursor: grab; touch-action: none; }
+#nightContainer.setting-open #nightResultTableWrapper { background: rgba(255,255,255,0.98); border: 3px solid #1e3799; padding: 10px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.4); zoom: 0.8; max-height: 60vh; overflow-y: auto; }
+#nightContainer.setting-open #nightFloatingContainer:active { cursor: grabbing; }
+#nightContainer.setting-open #nightPreviewToggleBtn { display: block !important; }
+#nightContainer.setting-open #nightOutTableWrapper { display: none; }
 
 table { border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; white-space: nowrap; }
 td, th { border: 1px solid #e1e4e8; padding: 10px; text-align: center; min-width: 60px; transition: all 0.2s; }
@@ -75,7 +83,7 @@ input[type="number"] { width: 60px; }
 .night-table-wrapper table { width: 100%; }
 .night-total-line { text-align: center; font-size: 14px; margin-top: 10px; color: #2f3542; }
 
-/* 両替「出す量」サブ列デザイン（枠を少し狭く調整） */
+/* 両替「出す量」サブ列デザイン */
 .sub-col-header { background-color: #747d8c !important; font-size: 11px; font-weight: normal; min-width: 45px !important; }
 .sub-col-cell { background-color: #f1f2f6 !important; min-width: 45px !important; padding: 6px 2px !important; }
 input.night-out-bar, input.night-out-coin {
@@ -150,13 +158,13 @@ td.edge-right { border-right: 2px solid black !important; }
 
 @media print {
   body { background: white; -webkit-user-select: auto; user-select: auto; }
-  .header-bar, #tourOverlay, #tourBubble, .modal-panel, #floatingContainer, .action-buttons { display: none !important; }
+  .header-bar, #tourOverlay, #tourBubble, .modal-panel, #floatingContainer, #nightFloatingContainer, .action-buttons { display: none !important; }
   .container { padding: 0; gap: 10px; }
   .tables-wrapper { display: block; }
   table { border: 1px solid #ccc; box-shadow: none; margin-bottom: 20px; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; }
   td, th { padding: 8px; }
   input[type="number"] { border: none; outline: none; box-shadow: none; font-weight: bold; background: transparent; }
-  #exchangeTableWrapper { display: block; border: none; box-shadow: none; }
+  #exchangeTableWrapper, #nightResultTableWrapper { display: block; border: none; box-shadow: none; }
   .history-controls { display:none !important; }
 }
 </style>
@@ -294,7 +302,7 @@ td.edge-right { border-right: 2px solid black !important; }
 <div id="nightContainer">
   <div class="night-wrapper">
     
-    <div class="night-table-wrapper">
+    <div class="night-table-wrapper" id="nightOutTableWrapper">
       <h4>① レジ両替・金庫から出す量</h4>
       <table>
         <thead>
@@ -315,14 +323,17 @@ td.edge-right { border-right: 2px solid black !important; }
       <div class="night-total-line">両替に出す合計：<span id="nightOutTotal" style="font-weight:bold;color:#eb4d4b;">0</span>円</div>
     </div>
 
-    <div class="night-table-wrapper">
-      <h4>② 両替後の金庫残高（自動計算・直接編集可能）</h4>
-      <p style="font-size:12px; margin:0 0 10px 0; color:#636e72;">※①を基に自動計算されます。直接手入力での変更も可能です。</p>
-      <table>
-        <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
-        <tbody id="nightResultBody"></tbody>
-        <tr class="total"><td colspan="3">両替後の合計</td><td id="nightResultTotal">0</td></tr>
-      </table>
+    <div id="nightFloatingContainer">
+      <div class="night-table-wrapper" id="nightResultTableWrapper">
+        <h4>② 両替後の金庫残高（自動計算・直接編集可能）</h4>
+        <p style="font-size:12px; margin:0 0 10px 0; color:#636e72;">※①を基に自動計算されます。直接手入力での変更も可能です。</p>
+        <table>
+          <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
+          <tbody id="nightResultBody"></tbody>
+          <tr class="total"><td colspan="3">両替後の合計</td><td id="nightResultTotal">0</td></tr>
+        </table>
+      </div>
+      <button id="nightPreviewToggleBtn">非表示</button>
     </div>
 
   </div>
@@ -461,14 +472,20 @@ function init() {
     el.addEventListener("input", (e) => {
       const p = e.target.dataset.price; const key = e.target.dataset.key;
       config.denoms[p][key] = e.target.type === "checkbox" ? e.target.checked : (e.target.type === "number" ? Number(e.target.value) : e.target.value);
+      // 朝・夜両方の計算・表示を同期更新
       calculate();
+      buildNightTables();
+      calculateNightAll();
     });
     el.addEventListener("focus", (e) => highlightPreview(e.target.dataset.price, e.target.dataset.key));
     el.addEventListener("blur", clearPreviewHighlight);
   });
 
   const vaultTotalIn = document.getElementById("set-vault-total");
-  vaultTotalIn.addEventListener("input", (e) => { config.vaultTotal = Number(e.target.value); calculate(); });
+  vaultTotalIn.addEventListener("input", (e) => { 
+    config.vaultTotal = Number(e.target.value); 
+    calculate(); 
+  });
   vaultTotalIn.addEventListener("focus", () => { document.getElementById("diff").classList.add("preview-highlight"); document.getElementById("needMoney").classList.add("preview-highlight"); });
   vaultTotalIn.addEventListener("blur", clearPreviewHighlight);
   calculate();
@@ -476,11 +493,24 @@ function init() {
 
 function highlightPreview(price, key) {
   clearPreviewHighlight();
+  // 朝テーブルプレビュー
   const mainRow = document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
   const exRow   = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-  if(!mainRow || !exRow) return;
-  if (['perBar','tBar','bMode','isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
-  else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
+  if(mainRow && exRow) {
+    if (['perBar','tBar','bMode','isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
+    else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
+  }
+
+  // 夜テーブルプレビュー
+  const nightResRows = document.querySelectorAll(`#nightResultBody tr`);
+  const idx = prices.indexOf(Number(price));
+  if (idx > -1 && nightResRows[idx]) {
+    if (['perBar','tBar','bMode','isAvailB'].includes(key)) {
+      if(nightResRows[idx].children[1]) nightResRows[idx].children[1].classList.add('preview-highlight');
+    } else {
+      if(nightResRows[idx].children[2]) nightResRows[idx].children[2].classList.add('preview-highlight');
+    }
+  }
 }
 function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight')); }
 
@@ -583,14 +613,18 @@ function toggleOthersMenu(btn) {
 }
 
 function openSettingModal() {
-  const isNight = document.getElementById('nightContainer').style.display === 'block';
+  const isNight = document.getElementById('modeNightBtn').classList.contains('active');
   
   document.getElementById("settingContainer").style.display = "flex";
   document.getElementById("modeSwitchBar").style.display = "none";
 
   if (isNight) {
-    document.getElementById("nightContainer").style.display = "none";
+    document.getElementById("mainContainer").style.display = "none";
+    document.getElementById("nightContainer").style.display = "block";
+    document.getElementById("nightContainer").classList.add("setting-open");
   } else {
+    document.getElementById("mainContainer").style.display = "flex";
+    document.getElementById("nightContainer").style.display = "none";
     document.getElementById("mainContainer").classList.add("setting-open");
   }
   
@@ -604,19 +638,36 @@ function closeSetting() {
   document.getElementById("modeSwitchBar").style.display = "flex";
 
   if (isNight) {
+    document.getElementById("mainContainer").style.display = "none";
     document.getElementById("nightContainer").style.display = "block";
+    document.getElementById("nightContainer").classList.remove("setting-open");
   } else {
+    document.getElementById("mainContainer").style.display = "flex";
+    document.getElementById("nightContainer").style.display = "none";
     document.getElementById("mainContainer").classList.remove("setting-open");
   }
 
-  const el = document.getElementById("floatingContainer");
-  el.style.position=""; el.style.top=""; el.style.left=""; el.style.bottom=""; el.style.right="";
+  ['floatingContainer', 'nightFloatingContainer'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.style.position=""; el.style.top=""; el.style.left=""; el.style.bottom=""; el.style.right="";
+    }
+  });
+
   clearPreviewHighlight(); closeTour();
 }
 
 function togglePreview() {
   const wrapper = document.getElementById("exchangeTableWrapper");
   const btn     = document.getElementById("previewToggleBtn");
+  const isHidden = wrapper.style.display === "none";
+  wrapper.style.display = isHidden ? "block" : "none";
+  btn.innerText = isHidden ? "非表示" : "表示";
+}
+
+function toggleNightPreview() {
+  const wrapper = document.getElementById("nightResultTableWrapper");
+  const btn     = document.getElementById("nightPreviewToggleBtn");
   const isHidden = wrapper.style.display === "none";
   wrapper.style.display = isHidden ? "block" : "none";
   btn.innerText = isHidden ? "非表示" : "表示";
@@ -903,13 +954,16 @@ document.querySelectorAll(".historyBtn").forEach(btn => btn.addEventListener("cl
   openHistoryModal();
 }));
 
-// ドラッグ操作
-(function() {
-  const el = document.getElementById("floatingContainer");
-  const toggleBtn = document.getElementById("previewToggleBtn");
+// ドラッグ操作（朝・夜汎用）
+function setupDraggable(containerId, toggleBtnId, toggleFn) {
+  const el = document.getElementById(containerId);
+  const toggleBtn = document.getElementById(toggleBtnId);
+  if (!el || !toggleBtn) return;
+
   let isDragging = false, offsetX, offsetY, startX, startY, hasMoved = false;
   const onStart = (e) => {
-    if (!document.getElementById("mainContainer").classList.contains("setting-open")) return;
+    const parentContainer = el.closest('.container, #nightContainer');
+    if (!parentContainer || !parentContainer.classList.contains("setting-open")) return;
     if (e.target.closest('input, select, .close-panel')) return;
     isDragging = true;
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -931,8 +985,11 @@ document.querySelectorAll(".historyBtn").forEach(btn => btn.addEventListener("cl
   el.addEventListener("mousedown", onStart); el.addEventListener("touchstart", onStart, {passive:false});
   window.addEventListener("mousemove", onMove); window.addEventListener("touchmove", onMove, {passive:false});
   window.addEventListener("mouseup", onEnd); window.addEventListener("touchend", onEnd);
-  toggleBtn.addEventListener("click", (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); return; } togglePreview(); });
-})();
+  toggleBtn.addEventListener("click", (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); return; } toggleFn(); });
+}
+
+setupDraggable("floatingContainer", "previewToggleBtn", togglePreview);
+setupDraggable("nightFloatingContainer", "nightPreviewToggleBtn", toggleNightPreview);
 
 document.addEventListener('focusin', function(e) {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
@@ -983,7 +1040,6 @@ function getNextFocusInput(currentInput) {
 
   // 列の末尾に達した場合の次の列への遷移
   if (isSub) {
-    // サブ列内での遷移: 出す量(棒金) -> 出す量(枚数) -> 両替後残高へ合流
     const subIdx = subColumns.indexOf(currentColSelector);
     if (subIdx < subColumns.length - 1) {
       const nextSubInputs = Array.from(document.querySelectorAll(`#nightContainer ${subColumns[subIdx + 1]}`));
@@ -993,7 +1049,6 @@ function getNextFocusInput(currentInput) {
       if (nextMainInputs.length > 0) return nextMainInputs[0];
     }
   } else {
-    // メイン列の遷移 (サブ列はスキップ): 現在(棒金) -> 現在(枚数) -> 両替後(棒金) -> 両替後(枚数)
     const mainIdx = mainColumns.indexOf(currentColSelector);
     if (mainIdx < mainColumns.length - 1) {
       for (let i = mainIdx + 1; i < mainColumns.length; i++) {
@@ -1053,15 +1108,28 @@ function getNightCellHTML(s, type, price) {
 }
 
 function buildNightTables() {
-  // ① レジ両替・金庫から出す量（「出す量」列にサブデザイン適用）
+  // 設定更新時にも入力値が消えないよう一時保存
+  const savedNight = {};
+  prices.forEach(p => {
+    savedNight[p] = {
+      curBar: document.querySelector(`.night-cur-bar[data-price="${p}"]`)?.value || "",
+      outBar: document.querySelector(`.night-out-bar[data-price="${p}"]`)?.value || "",
+      curCoin: document.querySelector(`.night-cur-coin[data-price="${p}"]`)?.value || "",
+      outCoin: document.querySelector(`.night-out-coin[data-price="${p}"]`)?.value || "",
+      resBar: document.querySelector(`.night-res-bar-in[data-price="${p}"]`)?.value || "",
+      resCoin: document.querySelector(`.night-res-coin-in[data-price="${p}"]`)?.value || ""
+    };
+  });
+
+  // ① レジ両替・金庫から出す量
   const outBody = document.getElementById('nightOutBody');
   outBody.innerHTML = prices.map(p => {
     return `<tr>
       <td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td>
-      <td><input type="number" class="night-cur-bar" data-price="${p}"></td>
-      <td class="sub-col-cell"><input type="number" class="night-out-bar" data-price="${p}"></td>
-      <td><input type="number" class="night-cur-coin" data-price="${p}"></td>
-      <td class="sub-col-cell"><input type="number" class="night-out-coin" data-price="${p}"></td>
+      <td><input type="number" class="night-cur-bar" data-price="${p}" value="${savedNight[p]?.curBar || ''}"></td>
+      <td class="sub-col-cell"><input type="number" class="night-out-bar" data-price="${p}" value="${savedNight[p]?.outBar || ''}"></td>
+      <td><input type="number" class="night-cur-coin" data-price="${p}" value="${savedNight[p]?.curCoin || ''}"></td>
+      <td class="sub-col-cell"><input type="number" class="night-out-coin" data-price="${p}" value="${savedNight[p]?.outCoin || ''}"></td>
     </tr>`;
   }).join('');
 
@@ -1078,6 +1146,14 @@ function buildNightTables() {
       <td id="night-res-sum-${p}">0</td>
     </tr>`;
   }).join('');
+
+  // 保持していた入力を戻す
+  prices.forEach(p => {
+    const resBarIn = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
+    const resCoinIn = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
+    if (resBarIn && savedNight[p]?.resBar !== undefined && savedNight[p]?.resBar !== "") resBarIn.value = savedNight[p].resBar;
+    if (resCoinIn && savedNight[p]?.resCoin !== undefined && savedNight[p]?.resCoin !== "") resCoinIn.value = savedNight[p].resCoin;
+  });
 
   // ①の各入力欄変更時に即座に②へ計算反映
   document.querySelectorAll('#nightOutBody input').forEach(el => {
