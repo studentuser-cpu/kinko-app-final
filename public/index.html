@@ -863,18 +863,19 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// スマホ・タブレット（タッチ操作）では、入力すると自動的に次の欄へ移動する
+// スマホ・タブレット（タッチ操作）では、2桁入力すると自動的に次の欄へ移動する
+// ※タイマー（setTimeout）でフォーカスを移動するとiOSの仕様でキーボードが自動表示されないため、
+//   入力イベントの中で即座（同期的）にフォーカスを移動することでキーボードを維持する
 const isTouchCapable = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
 if (isTouchCapable) {
-  let autoAdvanceTimer = null;
+  const AUTO_ADVANCE_DIGITS = 2;
   document.addEventListener('input', function(e) {
     if (!(e.target.classList && (e.target.classList.contains('in-bar') || e.target.classList.contains('in-coin')))) return;
-    clearTimeout(autoAdvanceTimer);
-    autoAdvanceTimer = setTimeout(() => {
+    if (e.target.value.replace('-', '').length >= AUTO_ADVANCE_DIGITS) {
       const navRoute = Array.from(document.querySelectorAll('.in-bar')).concat(Array.from(document.querySelectorAll('.in-coin')));
       const currentIndex = navRoute.indexOf(e.target);
       if (currentIndex > -1) navRoute[(currentIndex+1) % navRoute.length].focus();
-    }, 700);
+    }
   });
 }
 
