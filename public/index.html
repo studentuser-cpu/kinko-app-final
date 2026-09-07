@@ -74,14 +74,12 @@ input[type="number"] { width: 60px; }
 .night-table-wrapper h4 { margin-top: 0; text-align: center; color: #1e3799; }
 .night-table-wrapper table { width: 100%; }
 .night-total-line { text-align: center; font-size: 14px; margin-top: 10px; color: #2f3542; }
-.night-warning { text-align: center; font-size: 13px; color: #eb4d4b; margin-bottom: 10px; }
-#reflectBtn { display: block; margin: 0 auto; padding: 12px 40px; background: #2ed573; color: #fff; font-size: 16px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
-#reflectBtn:hover { background: #26af5f; }
 
-/* 両替「出す量」サブ列デザイン */
-.sub-col-header { background-color: #747d8c !important; font-size: 11px; font-weight: normal; }
-.sub-col-cell { background-color: #f1f2f6 !important; }
+/* 両替「出す量」サブ列デザイン（枠を少し狭く調整） */
+.sub-col-header { background-color: #747d8c !important; font-size: 11px; font-weight: normal; min-width: 45px !important; }
+.sub-col-cell { background-color: #f1f2f6 !important; min-width: 45px !important; padding: 6px 2px !important; }
 input.night-out-bar, input.night-out-coin {
+  width: 45px !important;
   background-color: #f8f9fa !important;
   border: 1px dashed #a4b0be !important;
   color: #57606f !important;
@@ -334,11 +332,6 @@ td.edge-right { border-right: 2px solid black !important; }
       </table>
     </div>
 
-  </div>
-  <div class="night-warning" id="nightWarning" style="display:none; margin-top:20px;"></div>
-  
-  <div style="text-align:center; margin-top: 20px;">
-    <button id="reflectBtn">✅ この内容を金庫に反映する</button>
   </div>
 
   <div class="action-buttons" style="display:flex; justify-content:center; gap:10px; margin-top:25px; flex-wrap:wrap;">
@@ -944,14 +937,72 @@ document.addEventListener('focusin', function(e) {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
 });
 
-// 表示中の領域内の入力フィールドを取得（ナビゲーション用）
-function getActiveInputs() {
+// 次のフォーカス対象を取得（夜モードは縦移動＆サブ列ナビゲーション制御）
+function getNextFocusInput(currentInput) {
   const isNight = document.getElementById('nightContainer').style.display === 'block';
-  if (isNight) {
-    return Array.from(document.querySelectorAll('#nightContainer input[type="number"]'));
-  } else {
-    return Array.from(document.querySelectorAll('#mainContainer .tables-wrapper input[type="number"]'));
+  if (!isNight) {
+    const navRoute = Array.from(document.querySelectorAll('#mainContainer .tables-wrapper input[type="number"]'));
+    const idx = navRoute.indexOf(currentInput);
+    return (idx > -1 && idx < navRoute.length - 1) ? navRoute[idx + 1] : null;
   }
+
+  // 夜モードの列構造
+  const mainColumns = ['.night-cur-bar', '.night-cur-coin', '.night-res-bar-in', '.night-res-coin-in'];
+  const subColumns  = ['.night-out-bar', '.night-out-coin'];
+
+  let currentColSelector = null;
+  let isSub = false;
+
+  for (const sel of subColumns) {
+    if (currentInput.matches(sel)) {
+      currentColSelector = sel;
+      isSub = true;
+      break;
+    }
+  }
+
+  if (!isSub) {
+    for (const sel of mainColumns) {
+      if (currentInput.matches(sel)) {
+        currentColSelector = sel;
+        break;
+      }
+    }
+  }
+
+  if (!currentColSelector) return null;
+
+  const colInputs = Array.from(document.querySelectorAll(`#nightContainer ${currentColSelector}`));
+  const idxInCol = colInputs.indexOf(currentInput);
+
+  // 同じ列の次の行（縦）があればそこへ移動
+  if (idxInCol > -1 && idxInCol < colInputs.length - 1) {
+    return colInputs[idxInCol + 1];
+  }
+
+  // 列の末尾に達した場合の次の列への遷移
+  if (isSub) {
+    // サブ列内での遷移: 出す量(棒金) -> 出す量(枚数) -> 両替後残高へ合流
+    const subIdx = subColumns.indexOf(currentColSelector);
+    if (subIdx < subColumns.length - 1) {
+      const nextSubInputs = Array.from(document.querySelectorAll(`#nightContainer ${subColumns[subIdx + 1]}`));
+      if (nextSubInputs.length > 0) return nextSubInputs[0];
+    } else {
+      const nextMainInputs = Array.from(document.querySelectorAll(`#nightContainer .night-res-bar-in`));
+      if (nextMainInputs.length > 0) return nextMainInputs[0];
+    }
+  } else {
+    // メイン列の遷移 (サブ列はスキップ): 現在(棒金) -> 現在(枚数) -> 両替後(棒金) -> 両替後(枚数)
+    const mainIdx = mainColumns.indexOf(currentColSelector);
+    if (mainIdx < mainColumns.length - 1) {
+      for (let i = mainIdx + 1; i < mainColumns.length; i++) {
+        const nextColInputs = Array.from(document.querySelectorAll(`#nightContainer ${mainColumns[i]}`));
+        if (nextColInputs.length > 0) return nextColInputs[0];
+      }
+    }
+  }
+
+  return null;
 }
 
 // Enterキーでの自動フォーカス移動
@@ -959,10 +1010,9 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
       e.preventDefault();
-      const navRoute = getActiveInputs();
-      const currentIndex = navRoute.indexOf(e.target);
-      if (currentIndex > -1 && currentIndex < navRoute.length - 1) {
-        navRoute[currentIndex + 1].focus();
+      const nextInput = getNextFocusInput(e.target);
+      if (nextInput) {
+        nextInput.focus();
       }
     }
   }
@@ -975,10 +1025,9 @@ if (isTouchCapable) {
   document.addEventListener('input', function(e) {
     if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
       if (e.target.value.replace('-', '').length >= AUTO_ADVANCE_DIGITS) {
-        const navRoute = getActiveInputs();
-        const currentIndex = navRoute.indexOf(e.target);
-        if (currentIndex > -1 && currentIndex < navRoute.length - 1) {
-          navRoute[currentIndex + 1].focus();
+        const nextInput = getNextFocusInput(e.target);
+        if (nextInput) {
+          nextInput.focus();
         }
       }
     }
@@ -1101,41 +1150,6 @@ function calculateNightResultTotalOnly() {
 
   document.getElementById('nightResultTotal').innerText = resultTotal.toLocaleString();
 }
-
-// 「この内容を金庫に反映する」押下時
-document.getElementById('reflectBtn').addEventListener('click', () => {
-  const skipped = [];
-  prices.forEach(p => {
-    const s = config.denoms[p];
-    const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
-    const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
-
-    const resBar  = resBarInput  ? resBarInput.value  : 0;
-    const resCoin = resCoinInput ? resCoinInput.value : 0;
-
-    const mainBarInput = document.querySelector(`.in-bar[data-price="${p}"]`);
-    if (mainBarInput) mainBarInput.value = resBar;
-    else if (s.bMode !== 'none' && resBar != 0) {
-      skipped.push(`${p.toLocaleString()}円 棒金`);
-    }
-
-    const mainCoinInput = document.querySelector(`.in-coin[data-price="${p}"]`);
-    if (mainCoinInput) mainCoinInput.value = resCoin;
-    else if (s.cMode !== 'none' && resCoin != 0) {
-      skipped.push(`${p.toLocaleString()}円 枚数`);
-    }
-  });
-  calculate();
-
-  const warningEl = document.getElementById('nightWarning');
-  if (skipped.length > 0) {
-    warningEl.style.display = 'block';
-    warningEl.innerText = `⚠ 以下は現在「設定」で非表示になっているため金庫に反映できませんでした：${skipped.join('、')}。設定画面で表示をオンにしてから、もう一度反映してください。`;
-  } else {
-    warningEl.style.display = 'none';
-    alert('両替後の残高を朝の金庫管理画面に反映しました。');
-  }
-});
 
 document.getElementById('modeMorningBtn').addEventListener('click', () => switchDayNightMode('morning'));
 document.getElementById('modeNightBtn').addEventListener('click', () => switchDayNightMode('night'));
