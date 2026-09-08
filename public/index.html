@@ -50,8 +50,6 @@ input[type="number"] { width: 60px; }
 .txt-minus { color: #eb4d4b; font-weight: bold; }
 .txt-plus  { color: #0097e6; font-weight: bold; }
 .txt-ok    { color: #2f3542; font-weight: bold; }
-.bg-red    { background-color: #ffcccc; }
-.bg-yellow { background-color: #ffeaa7; }
 .bg-ok     { background-color: #f1f2f6; }
 .modal-panel { display: none; background: #fff; border-radius: 12px; border: 1px solid #dcdde1; padding: 25px; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.2); width: 1100px; max-width: 98%; margin-bottom: 40px; }
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f2f6; padding-bottom: 10px; }
@@ -59,7 +57,6 @@ input[type="number"] { width: 60px; }
 @media(min-width: 768px) { .help-section { flex-direction: row; } }
 .help-col { flex: 1; font-size: 13px; line-height: 1.6; }
 .help-col h4 { margin: 0 0 8px 0; color: #1e3799; border-bottom: 2px solid #1e3799; display: inline-block; }
-.help-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; width: 36px; text-align: center; margin-right: 5px; }
 .tour-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; pointer-events: none; }
 .tour-bubble { position: absolute; background: #1e3799; color: white; padding: 15px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 2001; width: 260px; font-size: 14px; pointer-events: auto; white-space: pre-wrap; line-height: 1.5; }
 .tour-btn-group { display: flex; justify-content: space-between; margin-top: 10px; }
@@ -101,12 +98,6 @@ input.night-out-bar:focus, input.night-out-coin:focus {
   .night-wrapper { gap: 15px; flex-direction: column; align-items: center; }
   .night-table-wrapper { padding: 10px; width: 100%; max-width: 600px; box-sizing: border-box; }
 }
-
-td.avail-active { background-color: #e8f4fd !important; }
-td.edge-top { border-top: 2px solid black !important; }
-td.edge-bottom { border-bottom: 2px solid black !important; }
-td.edge-left { border-left: 2px solid black !important; }
-td.edge-right { border-right: 2px solid black !important; }
 
 /* 履歴パネル */
 #historyOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000; align-items:center; justify-content:center; }
@@ -191,7 +182,7 @@ td.edge-right { border-right: 2px solid black !important; }
     </div>
   </div>
 
-  <!-- 設定パネル（朝・夜共通で表示するための独立コンテナ） -->
+  <!-- 設定パネル -->
   <div id="settingContainer" style="display:none; padding:20px; justify-content:center;">
     <div id="settingPanel" class="modal-panel" style="display:block; margin:0;">
       <div class="panel-header">
@@ -200,7 +191,7 @@ td.edge-right { border-right: 2px solid black !important; }
       </div>
 
       <div class="help-section" id="helpSectionContent">
-        <!-- 朝・夜モードに応じて動的生成されます -->
+        <!-- 動的に更新されます -->
       </div>
 
       <div id="guide-step-1" style="margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 8px;">
@@ -218,7 +209,6 @@ td.edge-right { border-right: 2px solid black !important; }
                 <th id="guide-step-2">1本の枚数</th>
                 <th id="guide-step-3" style="background:#3867d6;">目標(本)</th>
                 <th id="guide-step-4" style="background:#3867d6;">表示設定</th>
-                <th id="guide-step-5" class="setting-th-use" style="background:#3867d6;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingBarTbody"></tbody>
@@ -232,7 +222,6 @@ td.edge-right { border-right: 2px solid black !important; }
                 <th>金額</th>
                 <th style="background:#4b7bec;">目標(枚)</th>
                 <th style="background:#4b7bec;">表示設定</th>
-                <th class="setting-th-use" style="background:#4b7bec;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingCoinTbody"></tbody>
@@ -276,7 +265,6 @@ td.edge-right { border-right: 2px solid black !important; }
           <table>
             <thead><tr><th>金額</th><th>棒金差</th><th>枚数差</th></tr></thead>
             <tbody id="exchangeBody"></tbody>
-            <tr class="total"><td colspan="2">使用可能金額（両替用）</td><td id="availableMoney" style="color:#0097e6;">0円</td></tr>
             <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#eb4d4b;">0円</td></tr>
           </table>
         </div>
@@ -416,15 +404,15 @@ const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: false, pin: "1234",
   denoms: {
-    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
-    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
-    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
-    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: false },
-    100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-red", isAvailB: false, isAvailC: false },
-    50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    5:     { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false }
+    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "hidden", cMode: "show" },
+    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "hidden", cMode: "show" },
+    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "hidden", cMode: "show" },
+    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "hidden", cMode: "show" },
+    100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "show",   cMode: "show" },
+    50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "show",   cMode: "show" },
+    10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "show",   cMode: "show" },
+    5:     { perBar: 50,  tBar: 2, tCoin: 10, bMode: "show",   cMode: "show" },
+    1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "show",   cMode: "show" }
   }
 };
 let config = JSON.parse(JSON.stringify(defaultSettings));
@@ -434,45 +422,17 @@ let selectedHistoryIds = new Set();
 
 function updateSettingPanelContent(isNight) {
   const helpEl = document.getElementById("helpSectionContent");
-  const thEls = document.querySelectorAll(".setting-th-use");
-
-  if (isNight) {
-    helpEl.innerHTML = `
-      <div class="help-col">
-        <h4>1. 表示設定（不足時の扱い）</h4>
-        <div><span class="help-tag bg-red">赤</span> 【必須】目標に対する不足分を「判定対象」とする</div>
-        <div><span class="help-tag bg-yellow">黄</span> 【目安】目標に対する不足分を「判定対象」としない</div>
-        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定を表示しない</div>
-      </div>
-      <div class="help-col">
-        <h4>2. 「余剰加算」チェック</h4>
-        <div>目標より<b>多く持っている分</b>を、余剰可能額として計算に含めます。</div>
-        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-          <b>💡 例：1,000円札（目標35枚）</b><br>
-          手元に40枚ある場合、余った5枚分（5,000円）が余剰金として自動集計されます。
-        </div>
-      </div>
-    `;
-    thEls.forEach(th => th.innerText = "余剰加算");
-  } else {
-    helpEl.innerHTML = `
-      <div class="help-col">
-        <h4>1. 表示設定（不足時の扱い）</h4>
-        <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
-        <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
-        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
-      </div>
-      <div class="help-col">
-        <h4>2. 「両替使用」チェック</h4>
-        <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
-        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-          <b>💡 例：1,000円札（目標35枚）</b><br>
-          手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
-        </div>
-      </div>
-    `;
-    thEls.forEach(th => th.innerText = "両替使用");
-  }
+  helpEl.innerHTML = `
+    <div class="help-col">
+      <h4>1. 表示設定</h4>
+      <div>各金種の棒金・枚数を計算対象にするか（<b>表示</b> / <b>非表示</b>）を選択します。</div>
+      <div>「非表示」に設定した項目は計算画面および差額判定から除外されます。</div>
+    </div>
+    <div class="help-col">
+      <h4>2. 補充必要額・差額計算</h4>
+      <div>目標に対して<b>不足している金額</b>が自動で集計され、「補充が必要な金額」として算出されます。</div>
+    </div>
+  `;
 }
 
 function init() {
@@ -484,7 +444,10 @@ function init() {
   document.getElementById("set-vault-total").value = config.vaultTotal;
 
   prices.forEach(p => {
-    const s = config.denoms[p];
+    let s = config.denoms[p];
+    if (s.bMode === "bg-red" || s.bMode === "bg-yellow") s.bMode = "show";
+    if (s.cMode === "bg-red" || s.cMode === "bg-yellow") s.cMode = "show";
+
     const valB = savedInputs[p]?.b || "";
     const valC = savedInputs[p]?.c || "";
     const getCell = (mode, type, val) => {
@@ -494,15 +457,14 @@ function init() {
     };
     inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode,"bar",valB)}</td><td>${getCell(s.cMode,"coin",valC)}</td><td id="sum-${p}">0</td></tr>`;
     exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
-    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
-    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
+    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p.toLocaleString()}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="show" ${s.bMode=="show"?"selected":""}>表示</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>非表示</option></select></td></tr>`;
+    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p.toLocaleString()}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="show" ${s.cMode=="show"?"selected":""}>表示</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>非表示</option></select></td></tr>`;
   });
 
   document.querySelectorAll(".set-sync").forEach(el => {
     el.addEventListener("input", (e) => {
       const p = e.target.dataset.price; const key = e.target.dataset.key;
-      config.denoms[p][key] = e.target.type === "checkbox" ? e.target.checked : (e.target.type === "number" ? Number(e.target.value) : e.target.value);
-      // 朝・夜両方の計算・表示を同期更新
+      config.denoms[p][key] = e.target.type === "number" ? Number(e.target.value) : e.target.value;
       calculate();
       buildNightTables();
       calculateNightAll();
@@ -523,19 +485,17 @@ function init() {
 
 function highlightPreview(price, key) {
   clearPreviewHighlight();
-  // 朝テーブルプレビュー
   const mainRow = document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
   const exRow   = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
   if(mainRow && exRow) {
-    if (['perBar','tBar','bMode','isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
+    if (['perBar','tBar','bMode'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
     else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
   }
 
-  // 夜テーブルプレビュー
   const nightResRows = document.querySelectorAll(`#nightResultBody tr`);
   const idx = prices.indexOf(Number(price));
   if (idx > -1 && nightResRows[idx]) {
-    if (['perBar','tBar','bMode','isAvailB'].includes(key)) {
+    if (['perBar','tBar','bMode'].includes(key)) {
       if(nightResRows[idx].children[1]) nightResRows[idx].children[1].classList.add('preview-highlight');
     } else {
       if(nightResRows[idx].children[2]) nightResRows[idx].children[2].classList.add('preview-highlight');
@@ -545,7 +505,7 @@ function highlightPreview(price, key) {
 function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight')); }
 
 function calculate() {
-  let currentTotal = 0, needMoney = 0, availableMoney = 0;
+  let currentTotal = 0, needMoney = 0;
   let currentInputs = {};
   prices.forEach((price) => {
     const s = config.denoms[price];
@@ -556,46 +516,30 @@ function calculate() {
     currentInputs[price] = { b: bIn?.value || "", c: cIn?.value || "" };
     const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
     const bCell = rowEx.children[1]; const cCell = rowEx.children[2];
-    let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
+
+    let rowAmount = ((s.bMode !== "hidden" && s.bMode !== "none" ? barVal * s.perBar : 0) + (s.cMode !== "hidden" && s.cMode !== "none" ? coinVal : 0)) * price;
     currentTotal += rowAmount;
     document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
-    if (s.bMode === "hidden") bCell.innerText = "-";
-    else if (s.bMode !== "none") {
+
+    if (s.bMode === "hidden" || s.bMode === "none") {
+      bCell.innerText = "-";
+      bCell.className = "";
+    } else {
       const dBar = barVal - s.tBar;
       bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
-      let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-      bCell.className = bClass + (s.isAvailB ? ' avail-active' : '');
-      if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
-      if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
-    } else bCell.innerText = "-";
-    if (s.cMode === "hidden") cCell.innerText = "-";
-    else if (s.cMode !== "none") {
+      bCell.className = dBar > 0 ? "txt-plus" : (dBar < 0 ? "txt-minus" : "txt-ok bg-ok");
+      if (dBar < 0) needMoney += Math.abs(dBar) * s.perBar * price;
+    }
+
+    if (s.cMode === "hidden" || s.cMode === "none") {
+      cCell.innerText = "-";
+      cCell.className = "";
+    } else {
       const dCoin = coinVal - s.tCoin;
       cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
-      let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-      cCell.className = cClass + (s.isAvailC ? ' avail-active' : '');
-      if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
-      if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
-    } else cCell.innerText = "-";
-  });
-
-  const activeGrid = [];
-  prices.forEach((price) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    activeGrid.push([rowEx.children[1].classList.contains('avail-active'), rowEx.children[2].classList.contains('avail-active')]);
-  });
-  prices.forEach((price, rowIndex) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    const cells = [rowEx.children[1], rowEx.children[2]];
-    cells.forEach((cell, colIndex) => {
-      cell.classList.remove('edge-top','edge-bottom','edge-left','edge-right');
-      if (activeGrid[rowIndex][colIndex]) {
-        if (rowIndex === 0 || !activeGrid[rowIndex-1][colIndex]) cell.classList.add('edge-top');
-        if (rowIndex === prices.length-1 || !activeGrid[rowIndex+1][colIndex]) cell.classList.add('edge-bottom');
-        if (colIndex === 0 || !activeGrid[rowIndex][colIndex-1]) cell.classList.add('edge-left');
-        if (colIndex === 1 || !activeGrid[rowIndex][colIndex+1]) cell.classList.add('edge-right');
-      }
-    });
+      cCell.className = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? "txt-minus" : "txt-ok bg-ok");
+      if (dCoin < 0) needMoney += Math.abs(dCoin) * price;
+    }
   });
 
   document.getElementById("total").innerText = currentTotal.toLocaleString();
@@ -603,26 +547,27 @@ function calculate() {
   const dCell = document.getElementById("diff");
   dCell.innerText = diffVal.toLocaleString();
   dCell.className = (diffVal === 0) ? "diff-ok" : "diff-ng";
-  document.getElementById("needMoney").innerText    = needMoney.toLocaleString() + "円";
-  document.getElementById("availableMoney").innerText = availableMoney.toLocaleString() + "円";
+  if (document.getElementById("needMoney")) {
+    document.getElementById("needMoney").innerText = needMoney.toLocaleString() + "円";
+  }
   savedInputs = currentInputs;
 }
 
-// ────── ツアー ──────
+// ツアー
 let tourStep = 0;
 const tourSteps = [
   { id: "guide-step-1", msg: "1. 目標総額\n金庫にあるべき最終的な合計金額を入力します。" },
   { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
   { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
-  { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
-  { id: "guide-step-5", msg: "5. 余剰設定\nチェックを入れると、余剰分を集計対象として扱います。" },
-  { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
-  { id: "saveBtn",      msg: "7. 保存\n最後にここを押してクラウドへ保存してください。" }
+  { id: "guide-step-4", msg: "4. 表示設定\n表示するか非表示にするかを選択します。" },
+  { id: "guide-step-6", msg: "5. バラ(枚数)の設定\nバラについても同様に設定します。" },
+  { id: "saveBtn",      msg: "6. 保存\n最後にここを押してクラウドへ保存してください。" }
 ];
 function startTour() { tourStep = 0; document.getElementById("tourOverlay").style.display = "block"; showStep(); }
 function showStep() {
   document.querySelectorAll(".highlight-target").forEach(el => el.classList.remove("highlight-target"));
   const step = tourSteps[tourStep]; const target = document.getElementById(step.id); const bubble = document.getElementById("tourBubble");
+  if (!target) return;
   target.classList.add("highlight-target");
   document.getElementById("tourMessage").innerText = `${tourStep+1} / ${tourSteps.length}\n${step.msg}`;
   bubble.style.display = "block";
@@ -712,10 +657,6 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   init();
 });
 
-// ════════════════════════════════════════
-// 履歴の保存・表示
-// ════════════════════════════════════════
-
 // 朝モードの保存
 document.getElementById("saveSnapshotBtn").addEventListener("click", async () => {
   const memoInput = prompt("メモを入力してください（省略可）");
@@ -723,7 +664,7 @@ document.getElementById("saveSnapshotBtn").addEventListener("click", async () =>
   const displayMemo = "【朝】" + memoInput;
   const total = document.getElementById("total").innerText;
   const diff  = document.getElementById("diff").innerText;
-  const need  = document.getElementById("needMoney").innerText;
+  const need  = document.getElementById("needMoney") ? document.getElementById("needMoney").innerText : "-";
   const snapshot = { inputs: savedInputs, total, diff, need, memo: displayMemo, savedAt: new Date().toISOString() };
   try {
     await fetch(BASE_URL + '/api/history/save', { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot }) });
@@ -807,7 +748,6 @@ function renderHistoryCalendar() {
     const d = new Date(year, month - 1);
     const monthName = `${year}年${month}月`;
     const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
     
@@ -836,7 +776,7 @@ function renderHistoryCalendar() {
 
 function renderHistoryTable() {
   const tbody = document.getElementById("historyTableBody");
-  tbody.innerHTML = currentHistoryData.map((h, idx) => {
+  tbody.innerHTML = currentHistoryData.map((h) => {
     const d = new Date(h.savedAt);
     const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<tr>
@@ -955,11 +895,10 @@ function exportCsv() {
     const dCoin   = rowEx.children[2].innerText;
     csvContent += `${p},${barVal},${coinVal},${sumVal},${dBar},${dCoin}\n`;
   });
-  const total     = document.getElementById("total").innerText.replace(/,/g, "");
-  const diff      = document.getElementById("diff").innerText.replace(/,/g, "");
-  const available = document.getElementById("availableMoney").innerText.replace(/,/g, "").replace("円","");
-  const need      = document.getElementById("needMoney").innerText.replace(/,/g, "").replace("円","");
-  csvContent += `\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n使用可能金額,,,${available}\n補充が必要な金額,,,${need}\n`;
+  const total = document.getElementById("total").innerText.replace(/,/g, "");
+  const diff  = document.getElementById("diff").innerText.replace(/,/g, "");
+  const need  = document.getElementById("needMoney") ? document.getElementById("needMoney").innerText.replace(/,/g, "").replace("円","") : "0";
+  csvContent += `\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n補充が必要な金額,,,${need}\n`;
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   const dateStr = new Date().toISOString().slice(0,10);
@@ -1027,7 +966,7 @@ document.addEventListener('focusin', function(e) {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number') setTimeout(() => e.target.select(), 10);
 });
 
-// 次のフォーカス対象を取得（夜モードは縦移動＆サブ列ナビゲーション制御）
+// 次のフォーカス対象を取得
 function getNextFocusInput(currentInput) {
   const isNight = document.getElementById('nightContainer').style.display === 'block';
   if (!isNight) {
@@ -1036,7 +975,6 @@ function getNextFocusInput(currentInput) {
     return (idx > -1 && idx < navRoute.length - 1) ? navRoute[idx + 1] : null;
   }
 
-  // 夜モードの列構造
   const mainColumns = ['.night-cur-bar', '.night-cur-coin', '.night-res-bar-in', '.night-res-coin-in'];
   const subColumns  = ['.night-out-bar', '.night-out-coin'];
 
@@ -1065,12 +1003,10 @@ function getNextFocusInput(currentInput) {
   const colInputs = Array.from(document.querySelectorAll(`#nightContainer ${currentColSelector}`));
   const idxInCol = colInputs.indexOf(currentInput);
 
-  // 同じ列の次の行（縦）があればそこへ移動
   if (idxInCol > -1 && idxInCol < colInputs.length - 1) {
     return colInputs[idxInCol + 1];
   }
 
-  // 列の末尾に達した場合の次の列への遷移
   if (isSub) {
     const subIdx = subColumns.indexOf(currentColSelector);
     if (subIdx < subColumns.length - 1) {
@@ -1129,9 +1065,7 @@ init = function() {
   buildNightTables();
 };
 
-// ════════════════════════════════════════
 // 夜モード：レジ両替
-// ════════════════════════════════════════
 function getNightCellHTML(s, type, price) {
   const mode = type === 'bar' ? s.bMode : s.cMode;
   if (mode === "none") return "";
@@ -1140,7 +1074,6 @@ function getNightCellHTML(s, type, price) {
 }
 
 function buildNightTables() {
-  // 設定更新時にも入力値が消えないよう一時保存
   const savedNight = {};
   prices.forEach(p => {
     savedNight[p] = {
@@ -1153,7 +1086,6 @@ function buildNightTables() {
     };
   });
 
-  // ① レジ両替・金庫から出す量
   const outBody = document.getElementById('nightOutBody');
   outBody.innerHTML = prices.map(p => {
     return `<tr>
@@ -1165,7 +1097,6 @@ function buildNightTables() {
     </tr>`;
   }).join('');
 
-  // ② 両替後の金庫残高
   const resultBody = document.getElementById('nightResultBody');
   resultBody.innerHTML = prices.map(p => {
     const s = config.denoms[p];
@@ -1179,7 +1110,6 @@ function buildNightTables() {
     </tr>`;
   }).join('');
 
-  // 保持していた入力を戻す
   prices.forEach(p => {
     const resBarIn = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
     const resCoinIn = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
@@ -1187,18 +1117,15 @@ function buildNightTables() {
     if (resCoinIn && savedNight[p]?.resCoin !== undefined && savedNight[p]?.resCoin !== "") resCoinIn.value = savedNight[p].resCoin;
   });
 
-  // ①の各入力欄変更時に即座に②へ計算反映
   document.querySelectorAll('#nightOutBody input').forEach(el => {
     el.addEventListener('input', calculateNightAll);
   });
 
-  // ②の入力欄の直接変更時
   document.querySelectorAll('.night-res-bar-in, .night-res-coin-in').forEach(el => {
     el.addEventListener('input', calculateNightResultTotalOnly);
   });
 }
 
-// 夜モード開いた際に朝の現在値を初期値として読み込む（編集自由）
 function populateNightFromMorning() {
   prices.forEach(p => {
     const barVal  = document.querySelector(`.in-bar[data-price="${p}"]`)?.value || "";
@@ -1211,7 +1138,6 @@ function populateNightFromMorning() {
   calculateNightAll();
 }
 
-// ①の「現在」「出す量」の双方から計算して②へ自動反映
 function calculateNightAll() {
   let outTotal = 0;
   prices.forEach(p => {
@@ -1221,10 +1147,8 @@ function calculateNightAll() {
     const outBar  = Number(document.querySelector(`.night-out-bar[data-price="${p}"]`)?.value || 0);
     const outCoin = Number(document.querySelector(`.night-out-coin[data-price="${p}"]`)?.value || 0);
 
-    // 出す量の合計額計算
     outTotal += (outBar * perBar + outCoin) * p;
 
-    // ②の残高を自動計算して反映
     const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
     const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
 
@@ -1271,7 +1195,6 @@ function switchDayNightMode(mode) {
   if (isNight) populateNightFromMorning();
 }
 
-// アプリの初期化
 window.addEventListener('DOMContentLoaded', async () => {
   await loadConfigFromServer();
   init();
