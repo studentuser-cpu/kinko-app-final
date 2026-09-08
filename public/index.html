@@ -218,13 +218,12 @@ td.edge-right { border-right: 2px solid black !important; }
                 <th id="guide-step-2">1本の枚数</th>
                 <th id="guide-step-3" style="background:#3867d6;">目標(本)</th>
                 <th id="guide-step-4" style="background:#3867d6;">表示設定</th>
-                <th id="guide-step-5" class="setting-th-use" style="background:#3867d6;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingBarTbody"></tbody>
           </table>
         </div>
-        <div class="settings-table-wrapper" id="guide-step-6">
+        <div class="settings-table-wrapper" id="guide-step-5">
           <h4>枚数の設定</h4>
           <table style="width: 100%;">
             <thead>
@@ -232,7 +231,6 @@ td.edge-right { border-right: 2px solid black !important; }
                 <th>金額</th>
                 <th style="background:#4b7bec;">目標(枚)</th>
                 <th style="background:#4b7bec;">表示設定</th>
-                <th class="setting-th-use" style="background:#4b7bec;">両替使用</th>
               </tr>
             </thead>
             <tbody id="settingCoinTbody"></tbody>
@@ -276,7 +274,6 @@ td.edge-right { border-right: 2px solid black !important; }
           <table>
             <thead><tr><th>金額</th><th>棒金差</th><th>枚数差</th></tr></thead>
             <tbody id="exchangeBody"></tbody>
-            <tr class="total"><td colspan="2">使用可能金額（両替用）</td><td id="availableMoney" style="color:#0097e6;">0円</td></tr>
             <tr class="need"><td colspan="2">補充が必要な金額</td><td id="needMoney" style="color:#eb4d4b;">0円</td></tr>
           </table>
         </div>
@@ -416,15 +413,15 @@ const prices = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
 const defaultSettings = {
   vaultTotal: 100000, usePin: false, pin: "1234",
   denoms: {
-    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
-    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
-    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: true },
-    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "hidden", cMode: "bg-red", isAvailB: false, isAvailC: false },
-    100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-red", isAvailB: false, isAvailC: false },
-    50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    5:     { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false },
-    1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow", isAvailB: false, isAvailC: false }
+    10000: { perBar: 100, tBar: 0, tCoin: 0,  bMode: "hidden", cMode: "bg-red" },
+    5000:  { perBar: 100, tBar: 0, tCoin: 2,  bMode: "hidden", cMode: "bg-red" },
+    1000:  { perBar: 100, tBar: 0, tCoin: 35, bMode: "hidden", cMode: "bg-red" },
+    500:   { perBar: 50,  tBar: 0, tCoin: 30, bMode: "hidden", cMode: "bg-red" },
+    100:   { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-red" },
+    50:    { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow" },
+    10:    { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow" },
+    5:     { perBar: 50,  tBar: 2, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow" },
+    1:     { perBar: 50,  tBar: 4, tCoin: 10, bMode: "bg-red", cMode: "bg-yellow" }
   }
 };
 let config = JSON.parse(JSON.stringify(defaultSettings));
@@ -434,43 +431,26 @@ let selectedHistoryIds = new Set();
 
 function updateSettingPanelContent(isNight) {
   const helpEl = document.getElementById("helpSectionContent");
-  const thEls = document.querySelectorAll(".setting-th-use");
+
+  const syncMsg = '<div style="margin-bottom: 15px; font-weight: bold; color: #1e3799; background: #e8f4fd; padding: 10px; border-radius: 6px;">💡 ※棒金の枚数などの各種設定は、朝と夜で共通して同期されます。</div>';
 
   if (isNight) {
-    helpEl.innerHTML = `
+    helpEl.innerHTML = syncMsg + `
       <div class="help-col">
         <h4>1. 表示設定</h4>
-        <div><span class="help-tag" style="background:#1e3799; color:white;">表示</span> 両替対象として項目（入力欄）を表示します</div>
-        <div><span class="help-tag" style="background:#ddd;">-</span> 項目（入力欄）を非表示にします</div>
-      </div>
-      <div class="help-col">
-        <h4>2. 「余剰加算」チェック</h4>
-        <div>目標より<b>多く持っている分</b>を、余剰可能額として計算に含めます。</div>
-        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-          <b>💡 例：1,000円札（目標35枚）</b><br>
-          手元に40枚ある場合、余った5枚分（5,000円）が余剰金として自動集計されます。
-        </div>
+        <div><span class="help-tag" style="background:#1e3799; color:white;">表示</span> 入力する上で項目（入力欄）を使用（表示）します</div>
+        <div><span class="help-tag" style="background:#ddd;">-</span> 項目（入力欄）を使用しません（非表示にします）</div>
       </div>
     `;
-    thEls.forEach(th => th.innerText = "余剰加算");
   } else {
-    helpEl.innerHTML = `
+    helpEl.innerHTML = syncMsg + `
       <div class="help-col">
         <h4>1. 表示設定（不足時の扱い）</h4>
         <div><span class="help-tag bg-red">赤</span> 【必須】不足分を「補充が必要な金額」に<b>加算する</b></div>
         <div><span class="help-tag bg-yellow">黄</span> 【目安】不足分を「補充が必要な金額」に<b>加算しない</b></div>
-        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない</div>
-      </div>
-      <div class="help-col">
-        <h4>2. 「両替使用」チェック</h4>
-        <div>目標より<b>多く持っている分</b>を、右下の<b style="color:#0097e6;">【使用可能金額】</b>に加算します。</div>
-        <div style="margin-top:8px; font-size:12px; background:#fff; padding:10px; border-radius:6px; border:1px solid #d1d8e0;">
-          <b>💡 例：1,000円札（目標35枚）</b><br>
-          手元に40枚ある場合、余った5枚分（5,000円）が【使用可能金額】に自動集計されます。
-        </div>
+        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定（OK/NG）を表示しない（入力しない）</div>
       </div>
     `;
-    thEls.forEach(th => th.innerText = "両替使用");
   }
 
   // 表示設定のselectオプション更新（朝: 赤/黄/-、夜: 表示/-）
@@ -518,8 +498,8 @@ function init() {
     };
     inputBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td><td>${getCell(s.bMode,"bar",valB)}</td><td>${getCell(s.cMode,"coin",valC)}</td><td id="sum-${p}">0</td></tr>`;
     exchangeBody.innerHTML += `<tr data-row-price="${p}"><td style="background:#f8f9fa;">${p.toLocaleString()}</td><td class="res-bar"></td><td class="res-coin"></td></tr>`;
-    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailB" ${s.isAvailB?"checked":""}></td></tr>`;
-    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option></select></td><td><input type="checkbox" class="set-sync" data-price="${p}" data-key="isAvailC" ${s.isAvailC?"checked":""}></td></tr>`;
+    settingBarTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.perBar}" class="set-sync" data-price="${p}" data-key="perBar"></td><td><input type="number" value="${s.tBar}" class="set-sync" data-price="${p}" data-key="tBar"></td><td><select class="set-sync" data-price="${p}" data-key="bMode"><option value="bg-red" ${s.bMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.bMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.bMode=="hidden"?"selected":""}>-</option></select></td></tr>`;
+    settingCoinTbody.innerHTML += `<tr><td style="font-weight:bold; background:#f8f9fa;">${p}</td><td><input type="number" value="${s.tCoin}" class="set-sync" data-price="${p}" data-key="tCoin"></td><td><select class="set-sync" data-price="${p}" data-key="cMode"><option value="bg-red" ${s.cMode=="bg-red"?"selected":""}>赤</option><option value="bg-yellow" ${s.cMode=="bg-yellow"?"selected":""}>黄</option><option value="hidden" ${s.cMode=="hidden"?"selected":""}>-</option></select></td></tr>`;
   });
 
   document.querySelectorAll(".set-sync").forEach(el => {
@@ -551,7 +531,7 @@ function highlightPreview(price, key) {
   const mainRow = document.querySelector(`#inputBody tr[data-row-price="${price}"]`);
   const exRow   = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
   if(mainRow && exRow) {
-    if (['perBar','tBar','bMode','isAvailB'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
+    if (['perBar','tBar','bMode'].includes(key)) { if(mainRow.children[1]) mainRow.children[1].classList.add('preview-highlight'); if(exRow.children[1]) exRow.children[1].classList.add('preview-highlight'); }
     else { if(mainRow.children[2]) mainRow.children[2].classList.add('preview-highlight'); if(exRow.children[2]) exRow.children[2].classList.add('preview-highlight'); }
   }
 
@@ -559,7 +539,7 @@ function highlightPreview(price, key) {
   const nightResRows = document.querySelectorAll(`#nightResultBody tr`);
   const idx = prices.indexOf(Number(price));
   if (idx > -1 && nightResRows[idx]) {
-    if (['perBar','tBar','bMode','isAvailB'].includes(key)) {
+    if (['perBar','tBar','bMode'].includes(key)) {
       if(nightResRows[idx].children[1]) nightResRows[idx].children[1].classList.add('preview-highlight');
     } else {
       if(nightResRows[idx].children[2]) nightResRows[idx].children[2].classList.add('preview-highlight');
@@ -569,7 +549,7 @@ function highlightPreview(price, key) {
 function clearPreviewHighlight() { document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight')); }
 
 function calculate() {
-  let currentTotal = 0, needMoney = 0, availableMoney = 0;
+  let currentTotal = 0, needMoney = 0;
   let currentInputs = {};
   prices.forEach((price) => {
     const s = config.denoms[price];
@@ -583,43 +563,24 @@ function calculate() {
     let rowAmount = (s.bMode !== "none" || s.cMode !== "none") ? ((barVal * s.perBar) + coinVal) * price : 0;
     currentTotal += rowAmount;
     document.getElementById(`sum-${price}`).innerText = rowAmount.toLocaleString();
+    
     if (s.bMode === "hidden") bCell.innerText = "-";
     else if (s.bMode !== "none") {
       const dBar = barVal - s.tBar;
       bCell.innerText = dBar > 0 ? "+" + dBar : (dBar < 0 ? dBar : "OK");
       let bClass = dBar > 0 ? "txt-plus" : (dBar < 0 ? `txt-minus ${s.bMode}` : "txt-ok bg-ok");
-      bCell.className = bClass + (s.isAvailB ? ' avail-active' : '');
-      if(dBar > 0 && s.isAvailB) availableMoney += dBar * s.perBar * price;
+      bCell.className = bClass;
       if(dBar < 0 && s.bMode === "bg-red") needMoney += Math.abs(dBar) * s.perBar * price;
     } else bCell.innerText = "-";
+    
     if (s.cMode === "hidden") cCell.innerText = "-";
     else if (s.cMode !== "none") {
       const dCoin = coinVal - s.tCoin;
       cCell.innerText = dCoin > 0 ? "+" + dCoin : (dCoin < 0 ? dCoin : "OK");
       let cClass = dCoin > 0 ? "txt-plus" : (dCoin < 0 ? `txt-minus ${s.cMode}` : "txt-ok bg-ok");
-      cCell.className = cClass + (s.isAvailC ? ' avail-active' : '');
-      if(dCoin > 0 && s.isAvailC) availableMoney += dCoin * price;
+      cCell.className = cClass;
       if(dCoin < 0 && s.cMode === "bg-red") needMoney += Math.abs(dCoin) * price;
     } else cCell.innerText = "-";
-  });
-
-  const activeGrid = [];
-  prices.forEach((price) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    activeGrid.push([rowEx.children[1].classList.contains('avail-active'), rowEx.children[2].classList.contains('avail-active')]);
-  });
-  prices.forEach((price, rowIndex) => {
-    const rowEx = document.querySelector(`#exchangeBody tr[data-row-price="${price}"]`);
-    const cells = [rowEx.children[1], rowEx.children[2]];
-    cells.forEach((cell, colIndex) => {
-      cell.classList.remove('edge-top','edge-bottom','edge-left','edge-right');
-      if (activeGrid[rowIndex][colIndex]) {
-        if (rowIndex === 0 || !activeGrid[rowIndex-1][colIndex]) cell.classList.add('edge-top');
-        if (rowIndex === prices.length-1 || !activeGrid[rowIndex+1][colIndex]) cell.classList.add('edge-bottom');
-        if (colIndex === 0 || !activeGrid[rowIndex][colIndex-1]) cell.classList.add('edge-left');
-        if (colIndex === 1 || !activeGrid[rowIndex][colIndex+1]) cell.classList.add('edge-right');
-      }
-    });
   });
 
   document.getElementById("total").innerText = currentTotal.toLocaleString();
@@ -627,8 +588,7 @@ function calculate() {
   const dCell = document.getElementById("diff");
   dCell.innerText = diffVal.toLocaleString();
   dCell.className = (diffVal === 0) ? "diff-ok" : "diff-ng";
-  document.getElementById("needMoney").innerText    = needMoney.toLocaleString() + "円";
-  document.getElementById("availableMoney").innerText = availableMoney.toLocaleString() + "円";
+  document.getElementById("needMoney").innerText = needMoney.toLocaleString() + "円";
   savedInputs = currentInputs;
 }
 
@@ -639,9 +599,8 @@ const tourSteps = [
   { id: "guide-step-2", msg: "2. 1本の枚数\n棒金1本あたりの枚数です。" },
   { id: "guide-step-3", msg: "3. 目標(本)\n金庫に置いておくべき棒金・束の数を設定します。" },
   { id: "guide-step-4", msg: "4. 表示設定\n不足時の色分けや集計対象を設定します。" },
-  { id: "guide-step-5", msg: "5. 余剰設定\nチェックを入れると、余剰分を集計対象として扱います。" },
-  { id: "guide-step-6", msg: "6. バラ(枚数)の設定\nバラについても同様に設定します。" },
-  { id: "saveBtn",      msg: "7. 保存\n最後にここを押してクラウドへ保存してください。" }
+  { id: "guide-step-5", msg: "5. バラ(枚数)の設定\nバラについても同様に設定します。" },
+  { id: "saveBtn",      msg: "6. 保存\n最後にここを押してクラウドへ保存してください。" }
 ];
 function startTour() { tourStep = 0; document.getElementById("tourOverlay").style.display = "block"; showStep(); }
 function showStep() {
@@ -981,9 +940,8 @@ function exportCsv() {
   });
   const total     = document.getElementById("total").innerText.replace(/,/g, "");
   const diff      = document.getElementById("diff").innerText.replace(/,/g, "");
-  const available = document.getElementById("availableMoney").innerText.replace(/,/g, "").replace("円","");
   const need      = document.getElementById("needMoney").innerText.replace(/,/g, "").replace("円","");
-  csvContent += `\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n使用可能金額,,,${available}\n補充が必要な金額,,,${need}\n`;
+  csvContent += `\n項目,,,金額\n全体合計,,,${total}\n差額,,,${diff}\n補充が必要な金額,,,${need}\n`;
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   const dateStr = new Date().toISOString().slice(0,10);
@@ -1190,115 +1148,116 @@ function buildNightTables() {
   }).join('');
 
   // ② 両替後の金庫残高
-  const resultBody = document.getElementById('nightResultBody');
-  resultBody.innerHTML = prices.map(p => {
+  const resBody = document.getElementById('nightResultBody');
+  resBody.innerHTML = prices.map(p => {
     const s = config.denoms[p];
-    const barCell = getNightCellHTML(s, 'bar', p);
-    const coinCell = getNightCellHTML(s, 'coin', p);
-    return `<tr>
-      <td style="background:#f8f9fa; font-weight:bold;">${p.toLocaleString()}</td>
-      <td>${barCell}</td>
-      <td>${coinCell}</td>
-      <td id="night-res-sum-${p}">0</td>
+    
+    let resBarHtml  = getNightCellHTML(s, 'bar', p);
+    let resCoinHtml = getNightCellHTML(s, 'coin', p);
+    
+    // 表示設定が有効な場合のみ、入力値を復元
+    if(resBarHtml !== "" && resBarHtml !== "-") {
+      resBarHtml = `<input type="number" class="night-res-bar-in" data-price="${p}" value="${savedNight[p]?.resBar || ''}">`;
+    }
+    if(resCoinHtml !== "" && resCoinHtml !== "-") {
+      resCoinHtml = `<input type="number" class="night-res-coin-in" data-price="${p}" value="${savedNight[p]?.resCoin || ''}">`;
+    }
+
+    return `<tr data-row-price="${p}">
+      <td style="background:#f8f9fa;">${p.toLocaleString()}</td>
+      <td>${resBarHtml}</td>
+      <td>${resCoinHtml}</td>
+      <td id="night-sum-${p}">0</td>
     </tr>`;
   }).join('');
 
-  // 保持していた入力を戻す
-  prices.forEach(p => {
-    const resBarIn = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
-    const resCoinIn = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
-    if (resBarIn && savedNight[p]?.resBar !== undefined && savedNight[p]?.resBar !== "") resBarIn.value = savedNight[p].resBar;
-    if (resCoinIn && savedNight[p]?.resCoin !== undefined && savedNight[p]?.resCoin !== "") resCoinIn.value = savedNight[p].resCoin;
-  });
-
-  // ①の各入力欄変更時に即座に②へ計算反映
-  document.querySelectorAll('#nightOutBody input').forEach(el => {
-    el.addEventListener('input', calculateNightAll);
-  });
-
-  // ②の入力欄の直接変更時
-  document.querySelectorAll('.night-res-bar-in, .night-res-coin-in').forEach(el => {
-    el.addEventListener('input', calculateNightResultTotalOnly);
-  });
+  outBody.addEventListener('input', calculateNightAll);
+  resBody.addEventListener('input', calculateNightAll);
 }
 
-// 夜モード開いた際に朝の現在値を初期値として読み込む（編集自由）
-function populateNightFromMorning() {
-  prices.forEach(p => {
-    const barVal  = document.querySelector(`.in-bar[data-price="${p}"]`)?.value || "";
-    const coinVal = document.querySelector(`.in-coin[data-price="${p}"]`)?.value || "";
-    const curBarEl  = document.querySelector(`.night-cur-bar[data-price="${p}"]`);
-    const curCoinEl = document.querySelector(`.night-cur-coin[data-price="${p}"]`);
-    if (curBarEl)  curBarEl.value = barVal;
-    if (curCoinEl) curCoinEl.value = coinVal;
-  });
-  calculateNightAll();
-}
+function calculateNightAll(e) {
+  // 手動入力フラグ処理
+  if (e && e.target && e.target.tagName === 'INPUT') {
+    const t = e.target;
+    if (t.classList.contains('night-res-bar-in') || t.classList.contains('night-res-coin-in')) {
+      t.dataset.manual = 'true';
+    } else if (t.classList.contains('night-cur-bar') || t.classList.contains('night-cur-coin') || t.classList.contains('night-out-bar') || t.classList.contains('night-out-coin')) {
+      const p = t.dataset.price;
+      const resBarIn = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
+      const resCoinIn = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
+      if (resBarIn) resBarIn.dataset.manual = 'false';
+      if (resCoinIn) resCoinIn.dataset.manual = 'false';
+    }
+  }
 
-// ①の「現在」「出す量」の双方から計算して②へ自動反映
-function calculateNightAll() {
   let outTotal = 0;
+  let finalTotal = 0;
+
   prices.forEach(p => {
-    const perBar = config.denoms[p].perBar;
-    const curBar  = Number(document.querySelector(`.night-cur-bar[data-price="${p}"]`)?.value || 0);
-    const curCoin = Number(document.querySelector(`.night-cur-coin[data-price="${p}"]`)?.value || 0);
-    const outBar  = Number(document.querySelector(`.night-out-bar[data-price="${p}"]`)?.value || 0);
-    const outCoin = Number(document.querySelector(`.night-out-coin[data-price="${p}"]`)?.value || 0);
+    const s = config.denoms[p];
 
-    // 出す量の合計額計算
-    outTotal += (outBar * perBar + outCoin) * p;
+    const curBIn = document.querySelector(`.night-cur-bar[data-price="${p}"]`);
+    const outBIn = document.querySelector(`.night-out-bar[data-price="${p}"]`);
+    const curCIn = document.querySelector(`.night-cur-coin[data-price="${p}"]`);
+    const outCIn = document.querySelector(`.night-out-coin[data-price="${p}"]`);
 
-    // ②の残高を自動計算して反映
-    const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
-    const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
+    const bCur = Number(curBIn?.value || 0);
+    const bOut = Number(outBIn?.value || 0);
+    const cCur = Number(curCIn?.value || 0);
+    const cOut = Number(outCIn?.value || 0);
 
-    if (resBarInput)  resBarInput.value  = Math.max(0, curBar - outBar);
-    if (resCoinInput) resCoinInput.value = Math.max(0, curCoin - outCoin);
+    const rowOutMoney = ((bOut * s.perBar) + cOut) * p;
+    outTotal += rowOutMoney;
+
+    const autoResB = bCur - bOut;
+    const autoResC = cCur - cOut;
+
+    const resBIn = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
+    if (resBIn && resBIn.dataset.manual !== 'true') {
+      resBIn.value = (bCur || bOut) ? autoResB : "";
+    }
+    const resCIn = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
+    if (resCIn && resCIn.dataset.manual !== 'true') {
+      resCIn.value = (cCur || cOut) ? autoResC : "";
+    }
+
+    const finalB = Number(resBIn?.value || 0);
+    const finalC = Number(resCIn?.value || 0);
+
+    const rowFinalMoney = (s.bMode !== "none" || s.cMode !== "none") ? ((finalB * s.perBar) + finalC) * p : 0;
+    finalTotal += rowFinalMoney;
+
+    const sumCell = document.getElementById(`night-sum-${p}`);
+    if (sumCell) sumCell.innerText = rowFinalMoney.toLocaleString();
   });
 
   document.getElementById('nightOutTotal').innerText = outTotal.toLocaleString();
-  calculateNightResultTotalOnly();
+  document.getElementById('nightResultTotal').innerText = finalTotal.toLocaleString();
 }
 
-function calculateNightResultTotalOnly() {
-  let resultTotal = 0;
-  prices.forEach(p => {
-    const s = config.denoms[p];
-    const resBarInput  = document.querySelector(`.night-res-bar-in[data-price="${p}"]`);
-    const resCoinInput = document.querySelector(`.night-res-coin-in[data-price="${p}"]`);
-
-    const resBar  = Number(resBarInput?.value || 0);
-    const resCoin = Number(resCoinInput?.value || 0);
-
-    let sum = 0;
-    if (s.bMode !== "none" || s.cMode !== "none") {
-      sum = ((resBar * s.perBar) + resCoin) * p;
-    }
-
-    const resSumEl = document.getElementById(`night-res-sum-${p}`);
-    if (resSumEl) resSumEl.innerText = sum.toLocaleString();
-
-    resultTotal += sum;
-  });
-
-  document.getElementById('nightResultTotal').innerText = resultTotal.toLocaleString();
+function switchMode(mode) {
+  document.getElementById('modeMorningBtn').classList.remove('active');
+  document.getElementById('modeNightBtn').classList.remove('active');
+  
+  if (mode === 'morning') {
+    document.getElementById('modeMorningBtn').classList.add('active');
+    document.getElementById('mainContainer').style.display = 'flex';
+    document.getElementById('nightContainer').style.display = 'none';
+  } else {
+    document.getElementById('modeNightBtn').classList.add('active');
+    document.getElementById('mainContainer').style.display = 'none';
+    document.getElementById('nightContainer').style.display = 'block';
+  }
 }
 
-document.getElementById('modeMorningBtn').addEventListener('click', () => switchDayNightMode('morning'));
-document.getElementById('modeNightBtn').addEventListener('click', () => switchDayNightMode('night'));
-function switchDayNightMode(mode) {
-  const isNight = mode === 'night';
-  document.getElementById('mainContainer').style.display = isNight ? 'none' : 'flex';
-  document.getElementById('nightContainer').style.display = isNight ? 'block' : 'none';
-  document.getElementById('modeMorningBtn').classList.toggle('active', !isNight);
-  document.getElementById('modeNightBtn').classList.toggle('active', isNight);
-  if (isNight) populateNightFromMorning();
-}
+document.getElementById('modeMorningBtn').addEventListener('click', () => switchMode('morning'));
+document.getElementById('modeNightBtn').addEventListener('click', () => switchMode('night'));
 
-// アプリの初期化
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   await loadConfigFromServer();
   init();
+  const today = new Date();
+  if (today.getHours() >= 15) { switchMode('night'); }
 });
 </script>
 </body>
