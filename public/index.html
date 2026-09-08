@@ -322,7 +322,6 @@ td.edge-right { border-right: 2px solid black !important; }
         </thead>
         <tbody id="nightOutBody"></tbody>
       </table>
-      <div class="night-total-line">両替に出す合計：<span id="nightOutTotal" style="font-weight:bold;color:#eb4d4b;">0</span>円</div>
     </div>
 
     <div id="nightFloatingContainer">
@@ -332,8 +331,8 @@ td.edge-right { border-right: 2px solid black !important; }
         <table>
           <thead><tr><th>金額</th><th>棒金</th><th>枚数</th><th>合計</th></tr></thead>
           <tbody id="nightResultBody"></tbody>
-          <tr class="total"><td colspan="3">両替後の合計</td><td id="nightResultTotal">0</td></tr>
-          <tr class="total"><td colspan="3">朝の設定合計との差額</td><td id="nightResultDiff">0</td></tr>
+          <tr class="total"><td colspan="3">両替後合計</td><td id="nightResultTotal">0</td></tr>
+          <tr class="total"><td colspan="3">差額</td><td id="nightResultDiff">0</td></tr>
         </table>
       </div>
       <button id="nightPreviewToggleBtn">非表示</button>
@@ -350,7 +349,7 @@ td.edge-right { border-right: 2px solid black !important; }
         <div class="night-extra-total">クレジット合計：<span id="creditTotalDisplay">0</span>円</div>
       </div>
       <div class="night-extra-section">
-        <div class="night-extra-label">ミスレシ</div>
+        <div class="night-extra-label">ミスレシ(現金返金)</div>
         <div id="misReceiptList" class="night-extra-list"></div>
         <button type="button" id="addMisReceiptBtn" class="night-extra-add-btn">＋ ミスレシを追加</button>
         <div class="night-extra-total">ミスレシ合計：<span id="misReceiptTotalDisplay">0</span>円</div>
