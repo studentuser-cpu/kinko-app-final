@@ -439,10 +439,9 @@ function updateSettingPanelContent(isNight) {
   if (isNight) {
     helpEl.innerHTML = `
       <div class="help-col">
-        <h4>1. 表示設定（不足時の扱い）</h4>
-        <div><span class="help-tag bg-red">赤</span> 【必須】目標に対する不足分を「判定対象」とする</div>
-        <div><span class="help-tag bg-yellow">黄</span> 【目安】目標に対する不足分を「判定対象」としない</div>
-        <div><span class="help-tag" style="background:#ddd;">-</span> 【隠す】差額の判定を表示しない</div>
+        <h4>1. 表示設定</h4>
+        <div><span class="help-tag" style="background:#1e3799; color:white;">表示</span> 両替対象として項目（入力欄）を表示します</div>
+        <div><span class="help-tag" style="background:#ddd;">-</span> 項目（入力欄）を非表示にします</div>
       </div>
       <div class="help-col">
         <h4>2. 「余剰加算」チェック</h4>
@@ -473,6 +472,31 @@ function updateSettingPanelContent(isNight) {
     `;
     thEls.forEach(th => th.innerText = "両替使用");
   }
+
+  // 表示設定のselectオプション更新（朝: 赤/黄/-、夜: 表示/-）
+  prices.forEach(p => {
+    const s = config.denoms[p];
+    ['bMode', 'cMode'].forEach(key => {
+      const selectEl = document.querySelector(`select.set-sync[data-price="${p}"][data-key="${key}"]`);
+      if (!selectEl) return;
+      
+      const currentVal = s[key];
+      if (isNight) {
+        const isHidden = (currentVal === "hidden");
+        const activeVal = isHidden ? "bg-red" : currentVal;
+        selectEl.innerHTML = `
+          <option value="${activeVal}" ${!isHidden ? "selected" : ""}>表示</option>
+          <option value="hidden" ${isHidden ? "selected" : ""}>-</option>
+        `;
+      } else {
+        selectEl.innerHTML = `
+          <option value="bg-red" ${currentVal == "bg-red" ? "selected" : ""}>赤</option>
+          <option value="bg-yellow" ${currentVal == "bg-yellow" ? "selected" : ""}>黄</option>
+          <option value="hidden" ${currentVal == "hidden" ? "selected" : ""}>-</option>
+        `;
+      }
+    });
+  });
 }
 
 function init() {
