@@ -1298,7 +1298,10 @@ function calculateNightAll() {
     if (resCoinInput) resCoinInput.value = resCoin[p];
   });
 
-  document.getElementById('nightOutTotal').innerText = outTotal.toLocaleString();
+  const nightOutTotalEl = document.getElementById('nightOutTotal');
+  if (nightOutTotalEl) {
+    nightOutTotalEl.innerText = outTotal.toLocaleString();
+  }
   calculateNightResultTotalOnly();
 }
 
