@@ -748,7 +748,8 @@ document.getElementById("saveSnapshotNightBtn").addEventListener("click", async 
   if (memoInput === null) return;
   const displayMemo = "【夜】" + memoInput;
   const total = document.getElementById("nightResultTotal").innerText;
-  const snapshot = { inputs: {}, total, diff: "-", need: "-", memo: displayMemo, savedAt: new Date().toISOString() };
+  const misReceipt = calculateNightExtraTotal('.misreceipt-input');
+  const snapshot = { inputs: {}, total, diff: "-", need: "-", memo: displayMemo, misReceipt, savedAt: new Date().toISOString() };
   try {
     await fetch(BASE_URL + '/api/history/save', { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot }) });
   } catch(e) {}
